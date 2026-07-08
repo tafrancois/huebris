@@ -155,6 +155,40 @@
     background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; font-weight:500;
     z-index:70; box-shadow:var(--shadow); animation:pop .3s both;
   }
+  /* all photos grid */
+  .allGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
+  .monthHead{grid-column:1/-1; font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:17px; margin:10px 0 0;}
+  .photoCell{cursor:pointer;}
+  .photoCell img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; display:block;}
+  .photoCell .mini{display:flex; gap:3px; margin-top:5px; justify-content:center; flex-wrap:wrap;}
+  .photoCell .mini span{width:9px; height:9px; border-radius:50%;}
+  .photoCell .when{font-size:11px; color:var(--ink-soft); text-align:center; margin-top:2px;}
+  .monthInput{
+    font:inherit; font-size:15px; padding:9px 12px; border:1.5px solid var(--line);
+    border-radius:12px; background:#fff; color:var(--ink);
+  }
+  .tagPreview{width:100%; max-height:220px; object-fit:cover; border-radius:14px; display:block; margin-bottom:14px;}
+  .saveTagsBtn{
+    width:100%; border:none; cursor:pointer; font:inherit; font-weight:600; font-size:16px;
+    color:#fff; background:var(--ink); padding:14px; border-radius:14px; margin-top:14px;
+  }
+  .saveTagsBtn:disabled{opacity:.35; cursor:not-allowed;}
+
+  /* favorites */
+  .heartBtn{
+    border:1.5px solid var(--line); background:#fff; width:38px; height:38px; border-radius:50%;
+    font-size:17px; cursor:pointer; color:var(--ink-soft); flex:none; line-height:1;
+  }
+  .heartBtn.on{border-color:#D6362B; color:#D6362B; background:#FDEEEC;}
+  .thumbWrap{position:relative;}
+  .photoCell{position:relative;}
+  .favBadge{
+    position:absolute; top:6px; right:6px; font-size:13px; color:#fff;
+    text-shadow:0 1px 4px rgba(0,0,0,.55); pointer-events:none;
+  }
+  .lb-fav{background:transparent; border:1.5px solid #EDEBE5 !important; color:#EDEBE5;}
+  .lb-fav.on{background:#D6362B; border-color:#D6362B !important; color:#fff;}
+
   .dataBtn{
     border:1.5px solid var(--ink); background:#fff; color:var(--ink);
     font:inherit; font-weight:600; font-size:14px; padding:11px 16px; border-radius:999px; cursor:pointer;
@@ -199,11 +233,37 @@
     <div class="card" id="comboSection" style="display:none">
       <div class="comboBar">
         <div class="label" style="margin:0" id="comboTitle">Art with this combo</div>
-        <button class="addBtn" id="addArtBtn">+ Add art</button>
+        <div class="row" style="flex-wrap:nowrap">
+          <button class="heartBtn" id="favComboBtn" aria-label="Favorite this combo">♡</button>
+          <button class="addBtn" id="addArtBtn">+ Add art</button>
+        </div>
       </div>
       <div class="thumbGrid" id="comboThumbs"></div>
       <div class="empty" id="comboEmpty" style="display:none">Nothing here yet — this combo is uncharted territory.</div>
     </div>
+
+    <div class="card" id="favSection" style="display:none">
+      <div class="label">Your favorite combos ♥</div>
+      <div id="favList"></div>
+    </div>
+  </section>
+
+  <!-- ALL PHOTOS VIEW -->
+  <section id="view-all" style="display:none">
+    <button class="generate" id="bigAddBtn" style="font-size:17px; padding:15px; margin:0 0 14px">+ Add art 📸</button>
+    <div class="card" style="padding:14px 16px">
+      <div class="label">Filter by color</div>
+      <div class="pinRow" id="filterRow"></div>
+      <div class="pinStatus" id="filterStatus"></div>
+      <div class="label" style="margin-top:14px">Jump to a month</div>
+      <div class="row">
+        <input type="month" id="monthPick" class="monthInput">
+        <button class="chip" id="monthClear">Clear</button>
+      </div>
+    </div>
+    <div class="row" id="sortChips" style="justify-content:center; margin-bottom:14px"></div>
+    <div class="hint" id="allHint" style="display:none"></div>
+    <div class="allGrid" id="allGrid"></div>
   </section>
 
   <!-- COLLECTION VIEW -->
@@ -227,10 +287,12 @@
 
 <nav>
   <button id="tabGen" class="on">Generator</button>
+  <button id="tabAll">All Photos</button>
   <button id="tabCol">Collection</button>
 </nav>
 
 <input type="file" id="fileInput" accept="image/*" style="display:none">
+<input type="file" id="addFlowInput" accept="image/*" style="display:none">
 <input type="file" id="importInput" accept="application/json,.json" style="display:none">
 
 <script>
@@ -432,8 +494,49 @@ async function renderComboSection(){
   const ix = await loadIndex();
   const combo = ix.combos[currentKey()];
   const ids = combo ? combo.photoIds : [];
+  setHeart(document.getElementById('favComboBtn'), combo && combo.fav);
   await renderThumbs('comboThumbs', ids);
   document.getElementById('comboEmpty').style.display = ids.length ? 'none' : 'block';
+}
+
+function setHeart(btn, on){
+  btn.classList.toggle('on', !!on);
+  btn.textContent = on ? '♥' : '♡';
+}
+
+/* ---- combo favorites ---- */
+document.getElementById('favComboBtn').onclick = async () => {
+  if(!state.current) return;
+  const key = currentKey();
+  const ix = await loadIndex();
+  if(!ix.combos[key]) ix.combos[key] = { colors: key.split('+'), photoIds: [] };
+  ix.combos[key].fav = !ix.combos[key].fav;
+  await saveIndex(ix);
+  setHeart(document.getElementById('favComboBtn'), ix.combos[key].fav);
+  toast(ix.combos[key].fav ? comboName(key.split('+')) + ' favorited ♥' : 'Unfavorited');
+  renderFavCombos();
+};
+
+async function renderFavCombos(){
+  const ix = await loadIndex();
+  const favs = Object.entries(ix.combos).filter(([,c])=>c.fav);
+  const sec = document.getElementById('favSection');
+  const list = document.getElementById('favList');
+  sec.style.display = favs.length ? 'block' : 'none';
+  list.innerHTML = '';
+  favs.sort((a,b)=>b[1].photoIds.length - a[1].photoIds.length);
+  for(const [key, c] of favs){
+    const card = document.createElement('div');
+    card.className = 'comboCard';
+    card.style.boxShadow = 'none';
+    card.style.background = 'var(--paper)';
+    card.innerHTML = `
+      <div class="dots">${c.colors.map(id=>`<span style="background:${byId[id].hex.medium}"></span>`).join('')}</div>
+      <div class="info"><b>${comboName(c.colors)}</b><small>${c.photoIds.length ? c.photoIds.length + ' piece' + (c.photoIds.length>1?'s':'') : 'no art yet'}</small></div>
+      <div class="n">♥</div>`;
+    card.onclick = () => openGallery(key, c);
+    list.appendChild(card);
+  }
 }
 
 async function renderThumbs(gridId, photoIds){
@@ -443,11 +546,11 @@ async function renderThumbs(gridId, photoIds){
     const raw = await store.get('photo:'+pid);
     if(!raw) continue;
     let ph; try{ ph = JSON.parse(raw); }catch(e){ continue; }
-    const img = document.createElement('img');
-    img.src = ph.d;
-    img.alt = 'Saved art';
-    img.onclick = () => openLightbox(pid, ph);
-    grid.appendChild(img);
+    const w = document.createElement('div');
+    w.className = 'thumbWrap';
+    w.innerHTML = `<img src="${ph.d}" alt="Saved art">${ph.f ? '<span class="favBadge">♥</span>' : ''}`;
+    w.querySelector('img').onclick = () => openLightbox(pid, ph);
+    grid.appendChild(w);
   }
 }
 
@@ -514,7 +617,7 @@ async function renderCollection(){
     card.className = 'comboCard';
     card.innerHTML = `
       <div class="dots">${c.colors.map(id=>`<span style="background:${byId[id].hex.medium}"></span>`).join('')}</div>
-      <div class="info"><b>${comboName(c.colors)}</b><small>${c.colors.length} color${c.colors.length>1?'s':''}</small></div>
+      <div class="info"><b>${c.fav ? '♥ ' : ''}${comboName(c.colors)}</b><small>${c.colors.length} color${c.colors.length>1?'s':''}</small></div>
       <div class="n">${c.photoIds.length}</div>`;
     card.onclick = () => openGallery(key, c);
     list.appendChild(card);
@@ -524,11 +627,12 @@ async function renderCollection(){
 function openGallery(key, combo){
   const ov = document.createElement('div');
   ov.className = 'overlay';
+  const n = combo.photoIds.length;
   ov.innerHTML = `
     <div class="sheet">
       <button class="closeX" aria-label="Close">✕</button>
-      <h2>${comboName(combo.colors)}</h2>
-      <div class="sub">${combo.photoIds.length} piece${combo.photoIds.length>1?'s':''} in this combo</div>
+      <h2>${combo.fav ? '♥ ' : ''}${comboName(combo.colors)}</h2>
+      <div class="sub">${n ? n + ' piece' + (n>1?'s':'') + ' in this combo' : 'No art for this combo yet — the favorite is the promise. 🎨'}</div>
       <div class="thumbGrid" id="galleryGrid"></div>
     </div>`;
   ov.querySelector('.closeX').onclick = () => ov.remove();
@@ -546,39 +650,254 @@ function openLightbox(pid, ph){
     <img src="${ph.d}" alt="Saved art">
     <div class="meta">
       <div><b>${comboName(ph.c.split('+'))}</b><small>${ph.s ? ph.s + ' · ' : ''}${date}</small></div>
+      <button class="lb-fav${ph.f ? ' on' : ''}" aria-label="Favorite this photo">${ph.f ? '♥' : '♡'}</button>
       <button class="lb-del">Delete</button>
       <button class="lb-close">Close</button>
     </div>`;
   lb.querySelector('.lb-close').onclick = () => lb.remove();
+  lb.querySelector('.lb-fav').onclick = async (e) => {
+    ph.f = !ph.f;
+    await store.set('photo:'+pid, JSON.stringify(ph));
+    e.target.classList.toggle('on', ph.f);
+    e.target.textContent = ph.f ? '♥' : '♡';
+    if(state.view==='all') renderAllPhotos();
+    if(state.current) renderComboSection();
+  };
   lb.querySelector('.lb-del').onclick = async () => {
     if(!confirm('Delete this piece from the archive?')) return;
     await store.del('photo:'+pid);
     const ix = await loadIndex();
     if(ix.combos[ph.c]){
       ix.combos[ph.c].photoIds = ix.combos[ph.c].photoIds.filter(x=>x!==pid);
-      if(!ix.combos[ph.c].photoIds.length) delete ix.combos[ph.c];
+      if(!ix.combos[ph.c].photoIds.length && !ix.combos[ph.c].fav) delete ix.combos[ph.c];
       await saveIndex(ix);
     }
     lb.remove();
     document.querySelectorAll('.overlay').forEach(o=>o.remove());
     if(state.view==='col') renderCollection();
+    if(state.view==='all') renderAllPhotos();
     if(state.current) renderComboSection();
+    renderFavCombos();
     toast('Deleted');
   };
   document.body.appendChild(lb);
 }
 
+/* ============ ALL PHOTOS VIEW ============ */
+const SORTS = [
+  {id:'new', name:'Newest'},
+  {id:'old', name:'Oldest'},
+];
+state.sort = 'new';
+state.filterColors = [];
+state.filterMonth = '';
+
+/* month picker */
+const monthPick = document.getElementById('monthPick');
+monthPick.onchange = () => { state.filterMonth = monthPick.value; renderAllPhotos(); };
+document.getElementById('monthClear').onclick = () => {
+  monthPick.value = ''; state.filterMonth = ''; renderAllPhotos();
+};
+
+/* ---- photo-first add flow: pick image, then tag colors (no limit) ---- */
+const addFlowInput = document.getElementById('addFlowInput');
+document.getElementById('bigAddBtn').onclick = () => addFlowInput.click();
+addFlowInput.onchange = async () => {
+  const file = addFlowInput.files[0];
+  addFlowInput.value = '';
+  if(!file) return;
+  toast('Loading image…');
+  try{
+    const dataUrl = await compressImage(file, 1200, 0.72);
+    openTagSheet(dataUrl);
+  }catch(e){
+    console.error(e);
+    toast('Could not read that image — try again?');
+  }
+};
+
+function openTagSheet(dataUrl){
+  const selected = new Set();
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.innerHTML = `
+    <div class="sheet">
+      <button class="closeX" aria-label="Cancel">✕</button>
+      <h2>Tag the colors</h2>
+      <div class="sub">Which colors are in this piece? Pick as many as you used.</div>
+      <img class="tagPreview" src="${dataUrl}" alt="Your art">
+      <div class="pinRow" id="tagRow"></div>
+      <div class="pinStatus" id="tagStatus">Nothing tagged yet.</div>
+      <button class="saveTagsBtn" id="saveTagsBtn" disabled>Save to archive</button>
+    </div>`;
+  const close = () => ov.remove();
+  ov.querySelector('.closeX').onclick = close;
+  ov.onclick = e => { if(e.target===ov) close(); };
+  const tagRow = ov.querySelector('#tagRow');
+  const tagStatus = ov.querySelector('#tagStatus');
+  const saveBtn = ov.querySelector('#saveTagsBtn');
+  COLORS.forEach(c=>{
+    const b = document.createElement('button');
+    b.className = 'pinDot';
+    b.style.background = c.hex.medium;
+    b.title = c.name;
+    b.setAttribute('aria-label', 'Tag ' + c.name);
+    b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => {
+      selected.has(c.id) ? selected.delete(c.id) : selected.add(c.id);
+      const on = selected.has(c.id);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+      tagStatus.textContent = selected.size
+        ? 'Tagged: ' + [...selected].map(id=>byId[id].name).join(', ')
+        : 'Nothing tagged yet.';
+      saveBtn.disabled = !selected.size;
+    };
+    tagRow.appendChild(b);
+  });
+  saveBtn.onclick = async () => {
+    saveBtn.disabled = true;
+    const key = comboKey([...selected]);
+    const pid = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    const photo = { d:dataUrl, c:key, s:'', t:Date.now() };
+    await store.set('photo:'+pid, JSON.stringify(photo));
+    const ix = await loadIndex();
+    if(!ix.combos[key]) ix.combos[key] = { colors: key.split('+'), photoIds: [] };
+    ix.combos[key].photoIds.push(pid);
+    await saveIndex(ix);
+    close();
+    toast('Saved to ' + comboName(key.split('+')) + ' ✔');
+    renderAllPhotos();
+    if(state.current) renderComboSection();
+  };
+  document.body.appendChild(ov);
+}
+
+/* color filter dots */
+const filterRow = document.getElementById('filterRow');
+const filterStatus = document.getElementById('filterStatus');
+COLORS.forEach(c=>{
+  const b = document.createElement('button');
+  b.className = 'pinDot';
+  b.style.background = c.hex.medium;
+  b.title = c.name;
+  b.setAttribute('aria-label', 'Filter by ' + c.name);
+  b.setAttribute('aria-pressed', 'false');
+  b.onclick = () => {
+    const i = state.filterColors.indexOf(c.id);
+    if(i >= 0) state.filterColors.splice(i,1);
+    else state.filterColors.push(c.id);
+    const on = state.filterColors.includes(c.id);
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+    updateFilterStatus();
+    renderAllPhotos();
+  };
+  filterRow.appendChild(b);
+});
+function updateFilterStatus(){
+  filterStatus.textContent = state.filterColors.length
+    ? 'Showing art with: ' + state.filterColors.map(id=>byId[id].name).join(' + ')
+    : 'No filter — showing everything.';
+}
+updateFilterStatus();
+
+const sortChips = document.getElementById('sortChips');
+SORTS.forEach(s=>{
+  const b = document.createElement('button');
+  b.className = 'chip' + (s.id===state.sort ? ' on' : '');
+  b.textContent = s.name;
+  b.onclick = () => {
+    state.sort = s.id;
+    [...sortChips.children].forEach((c,i)=>{ if(SORTS[i]) c.classList.toggle('on', SORTS[i].id===s.id); });
+    renderAllPhotos();
+  };
+  sortChips.appendChild(b);
+});
+state.favOnly = false;
+const favChip = document.createElement('button');
+favChip.className = 'chip';
+favChip.textContent = '♥ Favorites';
+favChip.onclick = () => {
+  state.favOnly = !state.favOnly;
+  favChip.classList.toggle('on', state.favOnly);
+  renderAllPhotos();
+};
+sortChips.appendChild(favChip);
+
+async function renderAllPhotos(){
+  const grid = document.getElementById('allGrid');
+  const hint = document.getElementById('allHint');
+  grid.innerHTML = '';
+  const ix = await loadIndex();
+  const items = [];
+  for(const combo of Object.values(ix.combos)){
+    for(const pid of combo.photoIds){
+      const raw = await store.get('photo:'+pid);
+      if(!raw) continue;
+      let ph; try{ ph = JSON.parse(raw); }catch(e){ continue; }
+      const colorIds = ph.c.split('+');
+      if(state.favOnly && !ph.f) continue;
+      if(state.filterColors.length && !state.filterColors.every(id => colorIds.includes(id))) continue;
+      if(state.filterMonth){
+        const d = new Date(ph.t);
+        const mk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+        if(mk !== state.filterMonth) continue;
+      }
+      items.push({pid, ph});
+    }
+  }
+  hint.style.display = items.length ? 'none' : 'block';
+  if(state.favOnly && !items.length){
+    hint.textContent = 'No favorite photos' + (state.filterColors.length || state.filterMonth ? ' matching those filters' : '') + ' yet — tap the ♡ on any photo to crown it.';
+  } else if(state.filterMonth && !items.length){
+    const [y,m] = state.filterMonth.split('-');
+    const label = new Date(y, m-1, 1).toLocaleDateString(undefined,{month:'long', year:'numeric'});
+    hint.textContent = 'Nothing from ' + label + (state.filterColors.length ? ' with those colors' : '') + '.';
+  } else {
+    hint.textContent = state.filterColors.length
+      ? 'No art with ' + state.filterColors.map(id=>byId[id].name).join(' + ') + ' yet — sounds like a challenge. 👀'
+      : 'No photos yet — go make some art worth bragging about. 🎨';
+  }
+  items.sort((a,b)=> state.sort==='old' ? a.ph.t - b.ph.t : b.ph.t - a.ph.t);
+  let lastMonth = null;
+  for(const it of items){
+    const d = new Date(it.ph.t);
+    const monthLabel = d.toLocaleDateString(undefined, {month:'long', year:'numeric'});
+    if(monthLabel !== lastMonth){
+      const h = document.createElement('div');
+      h.className = 'monthHead';
+      h.textContent = monthLabel;
+      grid.appendChild(h);
+      lastMonth = monthLabel;
+    }
+    const cell = document.createElement('div');
+    cell.className = 'photoCell';
+    cell.innerHTML = `
+      <img src="${it.ph.d}" alt="Saved art — ${comboName(it.ph.c.split('+'))}">
+      ${it.ph.f ? '<span class="favBadge">♥</span>' : ''}
+      <div class="mini">${it.ph.c.split('+').map(id=>`<span style="background:${byId[id].hex.medium}"></span>`).join('')}</div>
+      <div class="when">${d.toLocaleDateString(undefined,{month:'short', day:'numeric'})}</div>`;
+    cell.onclick = () => openLightbox(it.pid, it.ph);
+    grid.appendChild(cell);
+  }
+}
+
 /* ============ TABS + TOAST ============ */
-const tabGen = document.getElementById('tabGen'), tabCol = document.getElementById('tabCol');
+const tabGen = document.getElementById('tabGen'), tabCol = document.getElementById('tabCol'), tabAll = document.getElementById('tabAll');
 tabGen.onclick = () => switchView('gen');
+tabAll.onclick = () => switchView('all');
 tabCol.onclick = () => switchView('col');
 function switchView(v){
   state.view = v;
   document.getElementById('view-gen').style.display = v==='gen' ? 'block' : 'none';
+  document.getElementById('view-all').style.display = v==='all' ? 'block' : 'none';
   document.getElementById('view-col').style.display = v==='col' ? 'block' : 'none';
   tabGen.classList.toggle('on', v==='gen');
+  tabAll.classList.toggle('on', v==='all');
   tabCol.classList.toggle('on', v==='col');
   if(v==='col') renderCollection();
+  if(v==='all') renderAllPhotos();
 }
 
 let toastTimer = null;
@@ -641,7 +960,19 @@ importInput.onchange = async () => {
       added++;
     }
     await saveIndex(ix);
+    // bring over favorited combos too (even ones with no photos)
+    if(payload.index && payload.index.combos){
+      const ix2 = await loadIndex();
+      for(const [k, c] of Object.entries(payload.index.combos)){
+        if(c.fav){
+          if(!ix2.combos[k]) ix2.combos[k] = { colors: k.split('+'), photoIds: [] };
+          ix2.combos[k].fav = true;
+        }
+      }
+      await saveIndex(ix2);
+    }
     renderCollection();
+    renderFavCombos();
     if(state.current) renderComboSection();
     toast(`Imported ${added} piece${added===1?'':'s'}${skipped ? ` (${skipped} already here)` : ''} ✔`);
   }catch(e){
@@ -657,6 +988,7 @@ if('serviceWorker' in navigator){
 
 /* first spin so the page never opens empty */
 generate();
+renderFavCombos();
 </script>
 </body>
 </html>
