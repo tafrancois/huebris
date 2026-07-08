@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Hue-bris · Palette Roulette</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Hue-bris">
+<meta name="theme-color" content="#F4F4F1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F4F1; --ink:#1D1C1A; --ink-soft:#6B6963; --line:#DCDAD3;
+    --card:#FFFFFF; --shadow:0 2px 10px rgba(29,28,26,.07), 0 10px 30px rgba(29,28,26,.06);
+    --radius:22px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:'Outfit',system-ui,sans-serif; font-size:16px; line-height:1.45;
+    min-height:100vh; padding-bottom:96px;
+  }
+  header{padding:26px 20px 6px; max-width:560px; margin:0 auto;}
+  .brand{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:34px; letter-spacing:-.5px;}
+  .brand .dot{display:inline-block; width:.5em; height:.5em; border-radius:46% 54% 58% 42%/52% 44% 56% 48%; background:var(--ink); margin-left:4px;}
+  .tag{color:var(--ink-soft); font-size:14px; margin-top:2px;}
+  main{max-width:560px; margin:0 auto; padding:12px 16px 0;}
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; margin-bottom:16px;}
+  .label{font-size:12px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:8px;}
+  .row{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+
+  /* segmented count picker */
+  .seg{display:flex; background:var(--paper); border-radius:14px; padding:4px; gap:4px;}
+  .seg button{
+    flex:1; border:none; background:transparent; font:inherit; font-weight:600;
+    padding:10px 0; border-radius:10px; cursor:pointer; color:var(--ink-soft);
+  }
+  .seg button.on{background:var(--ink); color:#fff;}
+
+  /* tone chips */
+  .chip{
+    border:1.5px solid var(--line); background:#fff; font:inherit; font-weight:500; font-size:14px;
+    padding:8px 14px; border-radius:999px; cursor:pointer; color:var(--ink-soft);
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .chip.on{border-color:var(--ink); color:var(--ink); font-weight:600;}
+  .chip .sw{width:10px; height:10px; border-radius:50%;}
+
+  /* pinned color picker */
+  .pinRow{display:flex; flex-wrap:wrap; gap:10px;}
+  .pinDot{
+    width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;
+    box-shadow:inset 0 0 0 2px rgba(0,0,0,.08); position:relative; padding:0;
+  }
+  .pinDot.on{box-shadow:0 0 0 3px var(--paper), 0 0 0 6px var(--ink);}
+  .pinDot.on::after{
+    content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:15px; text-shadow:0 1px 3px rgba(0,0,0,.55);
+  }
+  .pinStatus{font-size:13px; color:var(--ink-soft); margin-top:10px; min-height:18px;}
+
+  /* toggle */
+  .toggleRow{display:flex; justify-content:space-between; align-items:center; margin-top:14px;}
+  .toggleRow .txt b{display:block; font-weight:600;}
+  .toggleRow .txt span{font-size:13px; color:var(--ink-soft);}
+  .switch{position:relative; width:52px; height:30px; flex:none; border:none; cursor:pointer; border-radius:999px; background:var(--line); transition:background .2s;}
+  .switch::after{content:''; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.2); transition:transform .2s;}
+  .switch.on{background:var(--ink);}
+  .switch.on::after{transform:translateX(22px);}
+
+  /* generate button */
+  .generate{
+    width:100%; border:none; cursor:pointer; font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800; font-size:20px; color:#fff; background:var(--ink);
+    padding:18px; border-radius:18px; margin:4px 0 18px;
+  }
+  .generate:active{transform:scale(.985);}
+
+  /* swatch daubs */
+  #palette{display:flex; flex-direction:column; gap:12px; margin-bottom:16px;}
+  .daub{
+    display:flex; align-items:center; gap:16px; background:var(--card);
+    border-radius:var(--radius); box-shadow:var(--shadow); padding:14px 16px;
+    animation:pop .35s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  .daub:nth-child(2){animation-delay:.06s} .daub:nth-child(3){animation-delay:.12s} .daub:nth-child(4){animation-delay:.18s}
+  @keyframes pop{from{opacity:0; transform:translateY(10px) scale(.96)} to{opacity:1; transform:none}}
+  .blob{
+    width:72px; height:72px; flex:none;
+    border-radius:44% 56% 58% 42% / 52% 42% 58% 48%;
+  }
+  .daub:nth-child(2n) .blob{border-radius:58% 42% 46% 54%/44% 58% 42% 56%;}
+  .daub .name{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:20px; line-height:1.15;}
+  .daub .shade{font-size:13px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em; font-weight:600;}
+
+  /* combo art section */
+  .comboBar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
+  .addBtn{
+    border:1.5px dashed var(--ink); background:transparent; font:inherit; font-weight:600; font-size:14px;
+    color:var(--ink); padding:9px 14px; border-radius:999px; cursor:pointer;
+  }
+  .thumbGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .thumbGrid img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; cursor:pointer; display:block;}
+  .empty{color:var(--ink-soft); font-size:14px; padding:6px 2px;}
+
+  /* collection */
+  .comboCard{display:flex; align-items:center; gap:14px; background:var(--card); border-radius:18px; box-shadow:var(--shadow); padding:14px 16px; margin-bottom:10px; cursor:pointer;}
+  .dots{display:flex;}
+  .dots span{width:26px; height:26px; border-radius:50%; border:2.5px solid #fff; margin-left:-8px;}
+  .dots span:first-child{margin-left:0;}
+  .comboCard .info b{display:block; font-weight:600;}
+  .comboCard .info small{color:var(--ink-soft);}
+  .comboCard .n{margin-left:auto; font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:18px;}
+
+  /* tabs */
+  nav{
+    position:fixed; bottom:0; left:0; right:0; background:rgba(244,244,241,.92);
+    backdrop-filter:blur(10px); border-top:1px solid var(--line);
+    display:flex; justify-content:center; gap:8px; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  nav button{
+    border:none; background:transparent; font:inherit; font-weight:600; color:var(--ink-soft);
+    padding:10px 22px; border-radius:999px; cursor:pointer;
+  }
+  nav button.on{background:var(--ink); color:#fff;}
+
+  /* lightbox + gallery overlay */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,19,17,.55); backdrop-filter:blur(4px);
+    display:flex; align-items:flex-end; justify-content:center; z-index:50;
+  }
+  .sheet{
+    background:var(--paper); width:100%; max-width:560px; max-height:88vh; overflow-y:auto;
+    border-radius:26px 26px 0 0; padding:20px 16px calc(24px + env(safe-area-inset-bottom));
+  }
+  .sheet h2{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; margin:4px 0 2px; font-size:22px;}
+  .sheet .sub{color:var(--ink-soft); font-size:14px; margin-bottom:14px;}
+  .closeX{float:right; border:none; background:var(--card); width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; box-shadow:var(--shadow);}
+  .lightbox{position:fixed; inset:0; background:rgba(15,14,13,.94); z-index:60; display:flex; flex-direction:column;}
+  .lightbox img{flex:1; object-fit:contain; min-height:0; width:100%;}
+  .lightbox .meta{color:#EDEBE5; padding:14px 18px calc(18px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:12px;}
+  .lightbox .meta div{flex:1; font-size:14px;}
+  .lightbox .meta small{opacity:.65; display:block;}
+  .lightbox button{border:none; font:inherit; font-weight:600; padding:9px 14px; border-radius:999px; cursor:pointer;}
+  .lb-close{background:#EDEBE5; color:var(--ink);}
+  .lb-del{background:#B3362B; color:#fff;}
+  .toast{
+    position:fixed; left:50%; bottom:92px; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; font-weight:500;
+    z-index:70; box-shadow:var(--shadow); animation:pop .3s both;
+  }
+  .dataBtn{
+    border:1.5px solid var(--ink); background:#fff; color:var(--ink);
+    font:inherit; font-weight:600; font-size:14px; padding:11px 16px; border-radius:999px; cursor:pointer;
+  }
+  .dataBtn.solid{background:var(--ink); color:#fff;}
+  .hint{font-size:13px; color:var(--ink-soft); text-align:center; margin:2px 0 16px;}
+  button:focus-visible{outline:3px solid #2E6FD6; outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Hue<span class="dot" style="margin:0 5px"></span>bris</div>
+  <div class="tag">Spin a palette. Make the thing. Keep the receipts.</div>
+</header>
+
+<main>
+  <!-- GENERATOR VIEW -->
+  <section id="view-gen">
+    <div class="card">
+      <div class="label">How many colors</div>
+      <div class="seg" id="countSeg"></div>
+
+      <div class="label" style="margin-top:16px">Tones in the pool</div>
+      <div class="row" id="toneChips"></div>
+
+      <div class="label" style="margin-top:16px">Always include <span style="text-transform:none; letter-spacing:0; font-weight:500">(tap to pin)</span></div>
+      <div class="pinRow" id="pinRow"></div>
+      <div class="pinStatus" id="pinStatus"></div>
+
+      <div class="toggleRow">
+        <div class="txt"><b>Shade nuance</b><span>“Dark red” instead of just “red”</span></div>
+        <button class="switch" id="nuanceToggle" role="switch" aria-checked="false" aria-label="Shade nuance"></button>
+      </div>
+    </div>
+
+    <button class="generate" id="genBtn">Spin the palette 🎨</button>
+
+    <div id="palette"></div>
+
+    <div class="card" id="comboSection" style="display:none">
+      <div class="comboBar">
+        <div class="label" style="margin:0" id="comboTitle">Art with this combo</div>
+        <button class="addBtn" id="addArtBtn">+ Add art</button>
+      </div>
+      <div class="thumbGrid" id="comboThumbs"></div>
+      <div class="empty" id="comboEmpty" style="display:none">Nothing here yet — this combo is uncharted territory.</div>
+    </div>
+  </section>
+
+  <!-- COLLECTION VIEW -->
+  <section id="view-col" style="display:none">
+    <div class="hint" id="colHint"></div>
+    <div id="comboList"></div>
+
+    <div class="card">
+      <div class="label">Backup &amp; transfer</div>
+      <p style="font-size:14px; color:var(--ink-soft); margin:0 0 12px">
+        Export downloads your whole archive (every combo, every photo) as one file.
+        On a new device, open Hue-bris and import that file to bring it all back.
+      </p>
+      <div class="row">
+        <button class="dataBtn solid" id="exportBtn">⬇ Export data</button>
+        <button class="dataBtn" id="importBtn">⬆ Import backup</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav>
+  <button id="tabGen" class="on">Generator</button>
+  <button id="tabCol">Collection</button>
+</nav>
+
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+<input type="file" id="importInput" accept="application/json,.json" style="display:none">
+
+<script>
+/* ============ COLOR DATA ============ */
+const COLORS = [
+  {id:'yellow',   name:'Yellow',            tone:'warm',    hex:{light:'#FBE38A', medium:'#F0BE1B', dark:'#A87F0A'}},
+  {id:'orange',   name:'Orange',            tone:'warm',    hex:{light:'#F9B26B', medium:'#EE7A1D', dark:'#A85009'}},
+  {id:'red',      name:'Red',               tone:'warm',    hex:{light:'#EE8B84', medium:'#D6362B', dark:'#8C1F17'}},
+  {id:'pink',     name:'Pink',              tone:'warm',    hex:{light:'#F6B8D1', medium:'#E76FA3', dark:'#B03A6E'}},
+  {id:'purple',   name:'Purple',            tone:'cool',    hex:{light:'#B79BE0', medium:'#7A4FBF', dark:'#4B2E7A'}},
+  {id:'blue',     name:'Blue',              tone:'cool',    hex:{light:'#8FB4EC', medium:'#2E6FD6', dark:'#1B4489'}},
+  {id:'teal',     name:'Teal',              tone:'cool',    hex:{light:'#7CC6C6', medium:'#1F8A8A', dark:'#12595B'}},
+  {id:'green',    name:'Green',             tone:'cool',    hex:{light:'#93D49C', medium:'#3FA34D', dark:'#256B30'}},
+  {id:'army',     name:'Army Green',        tone:'neutral', hex:{light:'#A8AD7C', medium:'#6B7239', dark:'#454A22'}},
+  {id:'brown',    name:'Brown',             tone:'neutral', hex:{light:'#B58963', medium:'#7A4A2B', dark:'#4E2D18'}},
+  {id:'grayblack',name:'Gray & Black',      tone:'neutral', hex:{light:'#9A9A9A', medium:'#4A4A4A', dark:'#181818'}},
+];
+const byId = Object.fromEntries(COLORS.map(c=>[c.id,c]));
+const TONES = [
+  {id:'warm', name:'Warm', sw:'#EE7A1D'},
+  {id:'cool', name:'Cool', sw:'#2E6FD6'},
+  {id:'neutral', name:'Neutral', sw:'#7A4A2B'},
+];
+const SHADES = ['light','medium','dark'];
+const shadeLabel = s => s[0].toUpperCase()+s.slice(1);
+
+/* ============ STORAGE (window.storage in Claude, IndexedDB when deployed) ============ */
+const store = (() => {
+  if (typeof window !== 'undefined' && window.storage && window.storage.get) {
+    return {
+      async get(k){ try{ const r = await window.storage.get(k); return r ? r.value : null; }catch(e){ return null; } },
+      async set(k,v){ try{ await window.storage.set(k,v); }catch(e){ console.error(e); } },
+      async del(k){ try{ await window.storage.delete(k); }catch(e){} },
+    };
+  }
+  // IndexedDB fallback for GitHub Pages / PWA
+  let dbP = null;
+  function db(){
+    if(!dbP) dbP = new Promise((res,rej)=>{
+      const rq = indexedDB.open('daub-db',1);
+      rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => rej(rq.error);
+    });
+    return dbP;
+  }
+  async function op(mode, fn){
+    const d = await db();
+    return new Promise((res,rej)=>{
+      const tx = d.transaction('kv',mode);
+      const rq = fn(tx.objectStore('kv'));
+      rq.onsuccess = () => res(rq.result);
+      rq.onerror = () => rej(rq.error);
+    });
+  }
+  return {
+    async get(k){ try{ const v = await op('readonly', s=>s.get(k)); return v===undefined?null:v; }catch(e){ return null; } },
+    async set(k,v){ try{ await op('readwrite', s=>s.put(v,k)); }catch(e){ console.error(e); } },
+    async del(k){ try{ await op('readwrite', s=>s.delete(k)); }catch(e){} },
+  };
+})();
+
+const INDEX_KEY = 'daub-index-v1';
+async function loadIndex(){
+  const raw = await store.get(INDEX_KEY);
+  if(!raw) return {combos:{}};
+  try{ return JSON.parse(raw); }catch(e){ return {combos:{}}; }
+}
+async function saveIndex(ix){ await store.set(INDEX_KEY, JSON.stringify(ix)); }
+
+/* ============ STATE ============ */
+let state = {
+  count: 2,
+  tones: {warm:true, cool:true, neutral:true},
+  nuance: false,
+  pinned: [],          // color ids that must appear in every spin
+  current: null,       // [{id, shade}]
+  view: 'gen',
+};
+
+/* pinned color picker */
+const pinRow = document.getElementById('pinRow');
+const pinStatus = document.getElementById('pinStatus');
+COLORS.forEach(c=>{
+  const b = document.createElement('button');
+  b.className = 'pinDot';
+  b.style.background = c.hex.medium;
+  b.title = c.name;
+  b.setAttribute('aria-label', 'Pin ' + c.name);
+  b.setAttribute('aria-pressed', 'false');
+  b.onclick = () => {
+    const i = state.pinned.indexOf(c.id);
+    if(i >= 0){ state.pinned.splice(i,1); }
+    else {
+      if(state.pinned.length >= 4){ toast('Four pins max — that IS the whole palette!'); return; }
+      state.pinned.push(c.id);
+    }
+    const on = state.pinned.includes(c.id);
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+    updatePinStatus();
+  };
+  pinRow.appendChild(b);
+});
+function updatePinStatus(){
+  pinStatus.textContent = state.pinned.length
+    ? 'Pinned: ' + state.pinned.map(id=>byId[id].name).join(', ')
+    : 'Nothing pinned — full random.';
+}
+updatePinStatus();
+
+/* ============ SETTINGS UI ============ */
+const countSeg = document.getElementById('countSeg');
+[1,2,3,4].forEach(n=>{
+  const b = document.createElement('button');
+  b.textContent = n;
+  b.className = n===state.count ? 'on' : '';
+  b.onclick = () => { state.count = n; [...countSeg.children].forEach((c,i)=>c.classList.toggle('on', i===n-1)); };
+  countSeg.appendChild(b);
+});
+
+const toneChips = document.getElementById('toneChips');
+TONES.forEach(t=>{
+  const b = document.createElement('button');
+  b.className = 'chip on';
+  b.innerHTML = `<span class="sw" style="background:${t.sw}"></span>${t.name}`;
+  b.onclick = () => {
+    const next = !state.tones[t.id];
+    const onCount = Object.values(state.tones).filter(Boolean).length;
+    if(!next && onCount===1){ toast('Need at least one tone in the pool!'); return; }
+    state.tones[t.id] = next;
+    b.classList.toggle('on', next);
+  };
+  toneChips.appendChild(b);
+});
+
+const nuanceToggle = document.getElementById('nuanceToggle');
+nuanceToggle.onclick = () => {
+  state.nuance = !state.nuance;
+  nuanceToggle.classList.toggle('on', state.nuance);
+  nuanceToggle.setAttribute('aria-checked', String(state.nuance));
+};
+
+/* ============ GENERATE ============ */
+document.getElementById('genBtn').onclick = generate;
+function generate(){
+  if(state.pinned.length > state.count){
+    toast(`You pinned ${state.pinned.length} colors but the count is ${state.count} — raise the count or unpin one.`);
+    return;
+  }
+  // pinned colors always make the cut, even if their tone is toggled off
+  const pinnedPick = state.pinned.map(id => byId[id]);
+  const pool = COLORS.filter(c => state.tones[c.tone] && !state.pinned.includes(c.id));
+  const need = state.count - pinnedPick.length;
+  if(pool.length < need){
+    toast(`Not enough colors in the enabled tones to fill the rest — enable more tones or pick fewer colors.`);
+    return;
+  }
+  const picked = shuffle([...pinnedPick, ...shuffle([...pool]).slice(0, need)]);
+  state.current = picked.map(c => ({
+    id: c.id,
+    shade: state.nuance ? SHADES[Math.floor(Math.random()*3)] : 'medium',
+  }));
+  renderPalette();
+  renderComboSection();
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function renderPalette(){
+  const el = document.getElementById('palette');
+  el.innerHTML = '';
+  state.current.forEach(p=>{
+    const c = byId[p.id];
+    const d = document.createElement('div');
+    d.className = 'daub';
+    d.innerHTML = `
+      <div class="blob" style="background:${c.hex[p.shade]}"></div>
+      <div>
+        ${state.nuance ? `<div class="shade">${shadeLabel(p.shade)} shades of</div>` : ''}
+        <div class="name">${c.name}</div>
+      </div>`;
+    el.appendChild(d);
+  });
+}
+
+/* ============ COMBO KEY + ART ============ */
+function comboKey(colorIds){ return [...colorIds].sort().join('+'); }
+function comboName(colorIds){ return [...colorIds].sort().map(id=>byId[id].name).join(' + '); }
+function currentKey(){ return comboKey(state.current.map(p=>p.id)); }
+function currentShadeNote(){
+  if(!state.nuance) return '';
+  return state.current.map(p=>`${shadeLabel(p.shade)} ${byId[p.id].name}`).join(' · ');
+}
+
+async function renderComboSection(){
+  const sec = document.getElementById('comboSection');
+  sec.style.display = 'block';
+  document.getElementById('comboTitle').textContent = 'Your art: ' + comboName(state.current.map(p=>p.id));
+  const ix = await loadIndex();
+  const combo = ix.combos[currentKey()];
+  const ids = combo ? combo.photoIds : [];
+  await renderThumbs('comboThumbs', ids);
+  document.getElementById('comboEmpty').style.display = ids.length ? 'none' : 'block';
+}
+
+async function renderThumbs(gridId, photoIds){
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  for(const pid of [...photoIds].reverse()){
+    const raw = await store.get('photo:'+pid);
+    if(!raw) continue;
+    let ph; try{ ph = JSON.parse(raw); }catch(e){ continue; }
+    const img = document.createElement('img');
+    img.src = ph.d;
+    img.alt = 'Saved art';
+    img.onclick = () => openLightbox(pid, ph);
+    grid.appendChild(img);
+  }
+}
+
+/* ============ ADD ART ============ */
+const fileInput = document.getElementById('fileInput');
+document.getElementById('addArtBtn').onclick = () => {
+  if(!state.current){ toast('Generate a palette first!'); return; }
+  fileInput.click();
+};
+fileInput.onchange = async () => {
+  const file = fileInput.files[0];
+  fileInput.value = '';
+  if(!file) return;
+  toast('Saving…');
+  try{
+    const dataUrl = await compressImage(file, 1200, 0.72);
+    const pid = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    const key = currentKey();
+    const photo = { d:dataUrl, c:key, s:currentShadeNote(), t:Date.now() };
+    await store.set('photo:'+pid, JSON.stringify(photo));
+    const ix = await loadIndex();
+    if(!ix.combos[key]) ix.combos[key] = { colors: key.split('+'), photoIds: [] };
+    ix.combos[key].photoIds.push(pid);
+    await saveIndex(ix);
+    toast('Art saved to ' + comboName(key.split('+')) + ' ✔');
+    renderComboSection();
+  }catch(e){
+    console.error(e);
+    toast('Could not save that image — try again?');
+  }
+};
+
+function compressImage(file, maxDim, quality){
+  return new Promise((res, rej)=>{
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let {width:w, height:h} = img;
+      const scale = Math.min(1, maxDim / Math.max(w,h));
+      w = Math.round(w*scale); h = Math.round(h*scale);
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      res(cv.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+
+/* ============ COLLECTION VIEW ============ */
+async function renderCollection(){
+  const ix = await loadIndex();
+  const list = document.getElementById('comboList');
+  list.innerHTML = '';
+  const combos = Object.entries(ix.combos).filter(([,c])=>c.photoIds.length);
+  document.getElementById('colHint').textContent = combos.length
+    ? 'Tap a combo to see everything you made with it.'
+    : 'No art saved yet. Spin a palette, make something, snap it. 📸';
+  combos.sort((a,b)=>b[1].photoIds.length - a[1].photoIds.length);
+  for(const [key, c] of combos){
+    const card = document.createElement('div');
+    card.className = 'comboCard';
+    card.innerHTML = `
+      <div class="dots">${c.colors.map(id=>`<span style="background:${byId[id].hex.medium}"></span>`).join('')}</div>
+      <div class="info"><b>${comboName(c.colors)}</b><small>${c.colors.length} color${c.colors.length>1?'s':''}</small></div>
+      <div class="n">${c.photoIds.length}</div>`;
+    card.onclick = () => openGallery(key, c);
+    list.appendChild(card);
+  }
+}
+
+function openGallery(key, combo){
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.innerHTML = `
+    <div class="sheet">
+      <button class="closeX" aria-label="Close">✕</button>
+      <h2>${comboName(combo.colors)}</h2>
+      <div class="sub">${combo.photoIds.length} piece${combo.photoIds.length>1?'s':''} in this combo</div>
+      <div class="thumbGrid" id="galleryGrid"></div>
+    </div>`;
+  ov.querySelector('.closeX').onclick = () => ov.remove();
+  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+  document.body.appendChild(ov);
+  renderThumbs('galleryGrid', combo.photoIds);
+}
+
+/* ============ LIGHTBOX ============ */
+function openLightbox(pid, ph){
+  const lb = document.createElement('div');
+  lb.className = 'lightbox';
+  const date = new Date(ph.t).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
+  lb.innerHTML = `
+    <img src="${ph.d}" alt="Saved art">
+    <div class="meta">
+      <div><b>${comboName(ph.c.split('+'))}</b><small>${ph.s ? ph.s + ' · ' : ''}${date}</small></div>
+      <button class="lb-del">Delete</button>
+      <button class="lb-close">Close</button>
+    </div>`;
+  lb.querySelector('.lb-close').onclick = () => lb.remove();
+  lb.querySelector('.lb-del').onclick = async () => {
+    if(!confirm('Delete this piece from the archive?')) return;
+    await store.del('photo:'+pid);
+    const ix = await loadIndex();
+    if(ix.combos[ph.c]){
+      ix.combos[ph.c].photoIds = ix.combos[ph.c].photoIds.filter(x=>x!==pid);
+      if(!ix.combos[ph.c].photoIds.length) delete ix.combos[ph.c];
+      await saveIndex(ix);
+    }
+    lb.remove();
+    document.querySelectorAll('.overlay').forEach(o=>o.remove());
+    if(state.view==='col') renderCollection();
+    if(state.current) renderComboSection();
+    toast('Deleted');
+  };
+  document.body.appendChild(lb);
+}
+
+/* ============ TABS + TOAST ============ */
+const tabGen = document.getElementById('tabGen'), tabCol = document.getElementById('tabCol');
+tabGen.onclick = () => switchView('gen');
+tabCol.onclick = () => switchView('col');
+function switchView(v){
+  state.view = v;
+  document.getElementById('view-gen').style.display = v==='gen' ? 'block' : 'none';
+  document.getElementById('view-col').style.display = v==='col' ? 'block' : 'none';
+  tabGen.classList.toggle('on', v==='gen');
+  tabCol.classList.toggle('on', v==='col');
+  if(v==='col') renderCollection();
+}
+
+let toastTimer = null;
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.remove(), 2600);
+}
+
+/* ============ EXPORT / IMPORT ============ */
+document.getElementById('exportBtn').onclick = exportData;
+async function exportData(){
+  toast('Packing up your archive…');
+  const ix = await loadIndex();
+  const photos = {};
+  let n = 0;
+  for(const combo of Object.values(ix.combos)){
+    for(const pid of combo.photoIds){
+      const raw = await store.get('photo:'+pid);
+      if(raw){ photos[pid] = raw; n++; }
+    }
+  }
+  const payload = { app:'hue-bris', v:1, exported:Date.now(), index:ix, photos };
+  const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'hue-bris-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  toast(n ? `Exported ${n} piece${n>1?'s':''} ✔` : 'Exported (archive was empty, but hey, the file exists)');
+}
+
+const importInput = document.getElementById('importInput');
+document.getElementById('importBtn').onclick = () => importInput.click();
+importInput.onchange = async () => {
+  const file = importInput.files[0];
+  importInput.value = '';
+  if(!file) return;
+  try{
+    const payload = JSON.parse(await file.text());
+    if(payload.app !== 'hue-bris' || !payload.photos){
+      toast('That doesn\u2019t look like a Hue-bris backup file.');
+      return;
+    }
+    const ix = await loadIndex();
+    let added = 0, skipped = 0;
+    for(const [pid, raw] of Object.entries(payload.photos)){
+      const existing = await store.get('photo:'+pid);
+      if(existing){ skipped++; continue; }
+      let ph; try{ ph = JSON.parse(raw); }catch(e){ continue; }
+      if(!ph.d || !ph.c) continue;
+      await store.set('photo:'+pid, raw);
+      if(!ix.combos[ph.c]) ix.combos[ph.c] = { colors: ph.c.split('+'), photoIds: [] };
+      if(!ix.combos[ph.c].photoIds.includes(pid)) ix.combos[ph.c].photoIds.push(pid);
+      added++;
+    }
+    await saveIndex(ix);
+    renderCollection();
+    if(state.current) renderComboSection();
+    toast(`Imported ${added} piece${added===1?'':'s'}${skipped ? ` (${skipped} already here)` : ''} ✔`);
+  }catch(e){
+    console.error(e);
+    toast('Couldn\u2019t read that file — is it a Hue-bris backup?');
+  }
+};
+
+/* ============ PWA SERVICE WORKER ============ */
+if('serviceWorker' in navigator){
+  try{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }catch(e){}
+}
+
+/* first spin so the page never opens empty */
+generate();
+</script>
+</body>
+</html>
