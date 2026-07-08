@@ -143,13 +143,31 @@
   .sheet .sub{color:var(--ink-soft); font-size:14px; margin-bottom:14px;}
   .closeX{float:right; border:none; background:var(--card); width:36px; height:36px; border-radius:50%; font-size:16px; cursor:pointer; box-shadow:var(--shadow);}
   .lightbox{position:fixed; inset:0; background:rgba(15,14,13,.94); z-index:60; display:flex; flex-direction:column;}
-  .lightbox img{flex:1; object-fit:contain; min-height:0; width:100%;}
-  .lightbox .meta{color:#EDEBE5; padding:14px 18px calc(18px + env(safe-area-inset-bottom)); display:flex; align-items:center; gap:12px;}
-  .lightbox .meta div{flex:1; font-size:14px;}
-  .lightbox .meta small{opacity:.65; display:block;}
+  .lightbox .lbImg{flex:1; object-fit:contain; min-height:120px; width:100%;}
+  .lightbox .panel{
+    background:#1B1A18; color:#EDEBE5; max-height:62vh; overflow-y:auto;
+    border-radius:20px 20px 0 0; padding:16px 18px calc(18px + env(safe-area-inset-bottom));
+  }
+  .lightbox .panel h3{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:19px; margin:0 0 2px;}
+  .lightbox .panel .dateline{opacity:.6; font-size:13px; margin-bottom:12px;}
+  .lightbox .lblab{font-size:11px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; opacity:.55; margin:14px 0 8px;}
+  .lightbox .noteBox{
+    width:100%; box-sizing:border-box; font:inherit; font-size:15px; line-height:1.4;
+    background:#2A2825; color:#EDEBE5; border:1.5px solid #3C3936; border-radius:12px;
+    padding:11px 13px; resize:vertical; min-height:60px;
+  }
+  .lightbox .noteBox::placeholder{color:#8A857F;}
+  .lightbox .noteView{font-size:15px; line-height:1.45; white-space:pre-wrap; color:#DEDBD5;}
+  .lightbox .noteView.empty{opacity:.45; font-style:italic;}
+  .lightbox .editTags{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:4px;}
+  .lightbox .meta{display:flex; align-items:center; gap:10px; margin-top:16px; flex-wrap:wrap;}
+  .lightbox .meta .who{flex:1; min-width:120px;}
   .lightbox button{border:none; font:inherit; font-weight:600; padding:9px 14px; border-radius:999px; cursor:pointer;}
   .lb-close{background:#EDEBE5; color:var(--ink);}
   .lb-del{background:#B3362B; color:#fff;}
+  .lb-edit{background:transparent; border:1.5px solid #EDEBE5 !important; color:#EDEBE5;}
+  .lb-save{background:#EDEBE5; color:var(--ink);}
+  .lb-cancel{background:transparent; border:1.5px solid #6A6560 !important; color:#B8B4AE;}
   .toast{
     position:fixed; left:50%; bottom:92px; transform:translateX(-50%);
     background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; font-weight:500;
@@ -162,12 +180,15 @@
   .photoCell img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; display:block;}
   .photoCell .mini{display:flex; gap:3px; margin-top:5px; justify-content:center; flex-wrap:wrap;}
   .photoCell .mini span{width:9px; height:9px; border-radius:50%;}
+  .untagDot{border:1.5px dashed var(--ink-soft); background:transparent !important;}
   .photoCell .when{font-size:11px; color:var(--ink-soft); text-align:center; margin-top:2px;}
   .monthInput{
     font:inherit; font-size:15px; padding:9px 12px; border:1.5px solid var(--line);
     border-radius:12px; background:#fff; color:var(--ink);
   }
   .tagPreview{width:100%; max-height:220px; object-fit:cover; border-radius:14px; display:block; margin-bottom:14px;}
+  .tagStrip{display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; margin-bottom:14px;}
+  .tagStrip img{height:110px; width:110px; object-fit:cover; border-radius:12px; flex:none;}
   .saveTagsBtn{
     width:100%; border:none; cursor:pointer; font:inherit; font-weight:600; font-size:16px;
     color:#fff; background:var(--ink); padding:14px; border-radius:14px; margin-top:14px;
@@ -185,6 +206,10 @@
   .favBadge{
     position:absolute; top:6px; right:6px; font-size:13px; color:#fff;
     text-shadow:0 1px 4px rgba(0,0,0,.55); pointer-events:none;
+  }
+  .noteBadge{
+    position:absolute; top:6px; left:6px; font-size:12px; pointer-events:none;
+    text-shadow:0 1px 4px rgba(0,0,0,.6);
   }
   .lb-fav{background:transparent; border:1.5px solid #EDEBE5 !important; color:#EDEBE5;}
   .lb-fav.on{background:#D6362B; border-color:#D6362B !important; color:#fff;}
@@ -250,7 +275,10 @@
 
   <!-- ALL PHOTOS VIEW -->
   <section id="view-all" style="display:none">
-    <button class="generate" id="bigAddBtn" style="font-size:17px; padding:15px; margin:0 0 14px">+ Add art 📸</button>
+    <div class="row" style="gap:10px; margin-bottom:14px">
+      <button class="generate" id="quickAddBtn" style="flex:1; font-size:16px; padding:15px; margin:0">⚡ Quick add</button>
+      <button class="generate" id="tagAddBtn" style="flex:1; font-size:16px; padding:15px; margin:0; background:#fff; color:var(--ink); border:1.5px solid var(--ink)">🎨 Tag &amp; add</button>
+    </div>
     <div class="card" style="padding:14px 16px">
       <div class="label">Filter by color</div>
       <div class="pinRow" id="filterRow"></div>
@@ -292,7 +320,8 @@
 </nav>
 
 <input type="file" id="fileInput" accept="image/*" style="display:none">
-<input type="file" id="addFlowInput" accept="image/*" style="display:none">
+<input type="file" id="quickAddInput" accept="image/*" multiple style="display:none">
+<input type="file" id="tagAddInput" accept="image/*" multiple style="display:none">
 <input type="file" id="importInput" accept="application/json,.json" style="display:none">
 
 <script>
@@ -480,7 +509,12 @@ function renderPalette(){
 
 /* ============ COMBO KEY + ART ============ */
 function comboKey(colorIds){ return [...colorIds].sort().join('+'); }
-function comboName(colorIds){ return [...colorIds].sort().map(id=>byId[id].name).join(' + '); }
+function colorIdsOf(key){ return key ? key.split('+').filter(Boolean) : []; }
+function comboName(colorIds){
+  const arr = Array.isArray(colorIds) ? colorIds.filter(Boolean) : [];
+  if(!arr.length) return 'Uncategorized';
+  return [...arr].sort().map(id=>byId[id].name).join(' + ');
+}
 function currentKey(){ return comboKey(state.current.map(p=>p.id)); }
 function currentShadeNote(){
   if(!state.nuance) return '';
@@ -548,7 +582,7 @@ async function renderThumbs(gridId, photoIds){
     let ph; try{ ph = JSON.parse(raw); }catch(e){ continue; }
     const w = document.createElement('div');
     w.className = 'thumbWrap';
-    w.innerHTML = `<img src="${ph.d}" alt="Saved art">${ph.f ? '<span class="favBadge">♥</span>' : ''}`;
+    w.innerHTML = `<img src="${ph.d}" alt="Saved art">${ph.f ? '<span class="favBadge">♥</span>' : ''}${ph.n ? '<span class="noteBadge">📝</span>' : ''}`;
     w.querySelector('img').onclick = () => openLightbox(pid, ph);
     grid.appendChild(w);
   }
@@ -611,13 +645,24 @@ async function renderCollection(){
   document.getElementById('colHint').textContent = combos.length
     ? 'Tap a combo to see everything you made with it.'
     : 'No art saved yet. Spin a palette, make something, snap it. 📸';
-  combos.sort((a,b)=>b[1].photoIds.length - a[1].photoIds.length);
+  // biggest first, but Uncategorized always sinks to the bottom
+  combos.sort((a,b)=>{
+    if(a[0]==='') return 1;
+    if(b[0]==='') return -1;
+    return b[1].photoIds.length - a[1].photoIds.length;
+  });
   for(const [key, c] of combos){
+    const cids = colorIdsOf(key);
+    const uncat = cids.length === 0;
+    const dots = uncat
+      ? '<span class="untagDot" style="width:26px;height:26px;border-width:2px"></span>'
+      : cids.map(id=>`<span style="background:${byId[id].hex.medium}"></span>`).join('');
+    const sub = uncat ? 'needs tagging' : cids.length + ' color' + (cids.length>1?'s':'');
     const card = document.createElement('div');
     card.className = 'comboCard';
     card.innerHTML = `
-      <div class="dots">${c.colors.map(id=>`<span style="background:${byId[id].hex.medium}"></span>`).join('')}</div>
-      <div class="info"><b>${c.fav ? '♥ ' : ''}${comboName(c.colors)}</b><small>${c.colors.length} color${c.colors.length>1?'s':''}</small></div>
+      <div class="dots">${dots}</div>
+      <div class="info"><b>${c.fav ? '♥ ' : ''}${comboName(cids)}</b><small>${sub}</small></div>
       <div class="n">${c.photoIds.length}</div>`;
     card.onclick = () => openGallery(key, c);
     list.appendChild(card);
@@ -628,11 +673,15 @@ function openGallery(key, combo){
   const ov = document.createElement('div');
   ov.className = 'overlay';
   const n = combo.photoIds.length;
+  const cids = colorIdsOf(key);
+  const subText = n
+    ? (cids.length ? `${n} piece${n>1?'s':''} in this combo` : `${n} piece${n>1?'s':''} waiting to be tagged — open any to add colors`)
+    : 'No art for this combo yet — the favorite is the promise. 🎨';
   ov.innerHTML = `
     <div class="sheet">
       <button class="closeX" aria-label="Close">✕</button>
-      <h2>${combo.fav ? '♥ ' : ''}${comboName(combo.colors)}</h2>
-      <div class="sub">${n ? n + ' piece' + (n>1?'s':'') + ' in this combo' : 'No art for this combo yet — the favorite is the promise. 🎨'}</div>
+      <h2>${combo.fav ? '♥ ' : ''}${comboName(cids)}</h2>
+      <div class="sub">${subText}</div>
       <div class="thumbGrid" id="galleryGrid"></div>
     </div>`;
   ov.querySelector('.closeX').onclick = () => ov.remove();
@@ -645,25 +694,99 @@ function openGallery(key, combo){
 function openLightbox(pid, ph){
   const lb = document.createElement('div');
   lb.className = 'lightbox';
-  const date = new Date(ph.t).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
-  lb.innerHTML = `
-    <img src="${ph.d}" alt="Saved art">
-    <div class="meta">
-      <div><b>${comboName(ph.c.split('+'))}</b><small>${ph.s ? ph.s + ' · ' : ''}${date}</small></div>
-      <button class="lb-fav${ph.f ? ' on' : ''}" aria-label="Favorite this photo">${ph.f ? '♥' : '♡'}</button>
-      <button class="lb-del">Delete</button>
-      <button class="lb-close">Close</button>
-    </div>`;
-  lb.querySelector('.lb-close').onclick = () => lb.remove();
-  lb.querySelector('.lb-fav').onclick = async (e) => {
-    ph.f = !ph.f;
-    await store.set('photo:'+pid, JSON.stringify(ph));
-    e.target.classList.toggle('on', ph.f);
-    e.target.textContent = ph.f ? '♥' : '♡';
-    if(state.view==='all') renderAllPhotos();
-    if(state.current) renderComboSection();
-  };
-  lb.querySelector('.lb-del').onclick = async () => {
+  const imgSrc = ph.d;
+  render();
+
+  function dateStr(){ return new Date(ph.t).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'}); }
+
+  // VIEW MODE
+  function render(){
+    lb.innerHTML = `
+      <img class="lbImg" src="${imgSrc}" alt="Saved art">
+      <div class="panel">
+        <h3>${comboName(colorIdsOf(ph.c))}</h3>
+        <div class="dateline">${ph.s ? ph.s + ' · ' : ''}Added ${dateStr()}</div>
+        <div class="lblab">Notes</div>
+        <div class="noteView${ph.n ? '' : ' empty'}">${ph.n ? escapeHtml(ph.n) : 'No notes yet — tap Edit to add one.'}</div>
+        <div class="meta">
+          <button class="lb-fav who${ph.f ? ' on' : ''}" style="flex:0 0 auto" aria-label="Favorite">${ph.f ? '♥ Favorited' : '♡ Favorite'}</button>
+          <button class="lb-edit">Edit</button>
+          <button class="lb-del">Delete</button>
+          <button class="lb-close">Close</button>
+        </div>
+      </div>`;
+    lb.querySelector('.lb-close').onclick = () => lb.remove();
+    lb.querySelector('.lb-fav').onclick = async (e) => {
+      ph.f = !ph.f;
+      await store.set('photo:'+pid, JSON.stringify(ph));
+      e.target.classList.toggle('on', ph.f);
+      e.target.textContent = ph.f ? '♥ Favorited' : '♡ Favorite';
+      refreshViews();
+    };
+    lb.querySelector('.lb-edit').onclick = renderEdit;
+    lb.querySelector('.lb-del').onclick = onDelete;
+  }
+
+  // EDIT MODE — retag colors + edit notes
+  function renderEdit(){
+    const selected = new Set(colorIdsOf(ph.c));
+    lb.innerHTML = `
+      <img class="lbImg" src="${imgSrc}" alt="Saved art">
+      <div class="panel">
+        <h3>Edit piece</h3>
+        <div class="dateline">Added ${dateStr()}</div>
+        <div class="lblab">Colors in this piece</div>
+        <div class="editTags" id="editTags"></div>
+        <div class="lblab">Notes</div>
+        <textarea class="noteBox" id="noteBox" placeholder="e.g. only alcohol markers, gift for Kalina, the one where blending finally clicked…">${ph.n ? escapeHtml(ph.n) : ''}</textarea>
+        <div class="meta">
+          <button class="lb-save" id="saveEdit">Save changes</button>
+          <button class="lb-cancel" id="cancelEdit">Cancel</button>
+        </div>
+      </div>`;
+    const tagWrap = lb.querySelector('#editTags');
+    COLORS.forEach(c=>{
+      const b = document.createElement('button');
+      b.className = 'pinDot' + (selected.has(c.id) ? ' on' : '');
+      b.style.background = c.hex.medium;
+      b.title = c.name;
+      b.setAttribute('aria-label', c.name);
+      b.setAttribute('aria-pressed', String(selected.has(c.id)));
+      b.onclick = () => {
+        selected.has(c.id) ? selected.delete(c.id) : selected.add(c.id);
+        const on = selected.has(c.id);
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+      };
+      tagWrap.appendChild(b);
+    });
+    lb.querySelector('#cancelEdit').onclick = render;
+    lb.querySelector('#saveEdit').onclick = async () => {
+      if(!selected.size){ toast('Pick at least one color.'); return; }
+      const newKey = comboKey([...selected]);
+      const oldKey = ph.c;
+      const newNote = lb.querySelector('#noteBox').value.trim();
+      ph.n = newNote;
+      if(newKey !== oldKey){
+        // move photo to the new combo in the index
+        const ix = await loadIndex();
+        if(ix.combos[oldKey]){
+          ix.combos[oldKey].photoIds = ix.combos[oldKey].photoIds.filter(x=>x!==pid);
+          if(!ix.combos[oldKey].photoIds.length && !ix.combos[oldKey].fav) delete ix.combos[oldKey];
+        }
+        if(!ix.combos[newKey]) ix.combos[newKey] = { colors: newKey.split('+'), photoIds: [] };
+        if(!ix.combos[newKey].photoIds.includes(pid)) ix.combos[newKey].photoIds.push(pid);
+        ph.c = newKey;
+        await saveIndex(ix);
+      }
+      await store.set('photo:'+pid, JSON.stringify(ph));
+      toast('Saved ✔');
+      refreshViews();
+      render();
+    };
+  }
+
+  async function onDelete(){
     if(!confirm('Delete this piece from the archive?')) return;
     await store.del('photo:'+pid);
     const ix = await loadIndex();
@@ -674,13 +797,22 @@ function openLightbox(pid, ph){
     }
     lb.remove();
     document.querySelectorAll('.overlay').forEach(o=>o.remove());
+    refreshViews();
+    toast('Deleted');
+  }
+
+  function refreshViews(){
     if(state.view==='col') renderCollection();
     if(state.view==='all') renderAllPhotos();
     if(state.current) renderComboSection();
     renderFavCombos();
-    toast('Deleted');
-  };
+  }
+
   document.body.appendChild(lb);
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
 
 /* ============ ALL PHOTOS VIEW ============ */
@@ -699,36 +831,74 @@ document.getElementById('monthClear').onclick = () => {
   monthPick.value = ''; state.filterMonth = ''; renderAllPhotos();
 };
 
-/* ---- photo-first add flow: pick image, then tag colors (no limit) ---- */
-const addFlowInput = document.getElementById('addFlowInput');
-document.getElementById('bigAddBtn').onclick = () => addFlowInput.click();
-addFlowInput.onchange = async () => {
-  const file = addFlowInput.files[0];
-  addFlowInput.value = '';
-  if(!file) return;
-  toast('Loading image…');
-  try{
-    const dataUrl = await compressImage(file, 1200, 0.72);
-    openTagSheet(dataUrl);
-  }catch(e){
-    console.error(e);
-    toast('Could not read that image — try again?');
+/* ---- shared saver ---- */
+async function savePhotoRecord(dataUrl, key){
+  const pid = Date.now().toString(36) + Math.random().toString(36).slice(2,6) + Math.floor(Math.random()*1000);
+  const photo = { d:dataUrl, c:key, s:'', n:'', t:Date.now() };
+  await store.set('photo:'+pid, JSON.stringify(photo));
+  const ix = await loadIndex();
+  if(!ix.combos[key]) ix.combos[key] = { colors: colorIdsOf(key), photoIds: [] };
+  ix.combos[key].photoIds.push(pid);
+  await saveIndex(ix);
+  return pid;
+}
+
+/* ---- QUICK ADD: bulk, straight to Uncategorized, no tagging ---- */
+const quickAddInput = document.getElementById('quickAddInput');
+document.getElementById('quickAddBtn').onclick = () => quickAddInput.click();
+quickAddInput.onchange = async () => {
+  const files = [...quickAddInput.files];
+  quickAddInput.value = '';
+  if(!files.length) return;
+  toast(files.length > 1 ? `Adding ${files.length} photos…` : 'Adding photo…');
+  let ok = 0;
+  for(const file of files){
+    try{
+      const dataUrl = await compressImage(file, 1200, 0.72);
+      await savePhotoRecord(dataUrl, '');   // '' = Uncategorized
+      ok++;
+    }catch(e){ console.error(e); }
   }
+  toast(`Added ${ok} photo${ok===1?'':'s'} to Uncategorized ⚡`);
+  renderAllPhotos();
+  if(state.current) renderComboSection();
 };
 
-function openTagSheet(dataUrl){
+/* ---- TAG & ADD: bulk, one shared color set applied to all picked photos ---- */
+const tagAddInput = document.getElementById('tagAddInput');
+document.getElementById('tagAddBtn').onclick = () => tagAddInput.click();
+tagAddInput.onchange = async () => {
+  const files = [...tagAddInput.files];
+  tagAddInput.value = '';
+  if(!files.length) return;
+  toast(files.length > 1 ? `Loading ${files.length} images…` : 'Loading image…');
+  const urls = [];
+  for(const file of files){
+    try{ urls.push(await compressImage(file, 1200, 0.72)); }
+    catch(e){ console.error(e); }
+  }
+  if(urls.length) openTagSheet(urls);
+  else toast('Could not read those images — try again?');
+};
+
+function openTagSheet(dataUrls){
+  const many = dataUrls.length > 1;
   const selected = new Set();
   const ov = document.createElement('div');
   ov.className = 'overlay';
+  const previews = many
+    ? `<div class="tagStrip">${dataUrls.map(u=>`<img src="${u}" alt="Your art">`).join('')}</div>`
+    : `<img class="tagPreview" src="${dataUrls[0]}" alt="Your art">`;
   ov.innerHTML = `
     <div class="sheet">
       <button class="closeX" aria-label="Cancel">✕</button>
       <h2>Tag the colors</h2>
-      <div class="sub">Which colors are in this piece? Pick as many as you used.</div>
-      <img class="tagPreview" src="${dataUrl}" alt="Your art">
+      <div class="sub">${many ? `These colors apply to all ${dataUrls.length} photos. (You can retag any one later.)` : 'Which colors are in this piece? Pick as many as you used.'}</div>
+      ${previews}
       <div class="pinRow" id="tagRow"></div>
       <div class="pinStatus" id="tagStatus">Nothing tagged yet.</div>
-      <button class="saveTagsBtn" id="saveTagsBtn" disabled>Save to archive</button>
+      <button class="saveTagsBtn" id="saveTagsBtn" disabled>${many ? `Save ${dataUrls.length} to archive` : 'Save to archive'}</button>
+      <button class="saveTagsBtn" id="skipTagsBtn" style="background:transparent; color:var(--ink-soft); border:1.5px solid var(--line); margin-top:8px">Skip — save as Uncategorized</button>
     </div>`;
   const close = () => ov.remove();
   ov.querySelector('.closeX').onclick = close;
@@ -755,21 +925,17 @@ function openTagSheet(dataUrl){
     };
     tagRow.appendChild(b);
   });
-  saveBtn.onclick = async () => {
+  async function saveAll(key){
     saveBtn.disabled = true;
-    const key = comboKey([...selected]);
-    const pid = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-    const photo = { d:dataUrl, c:key, s:'', t:Date.now() };
-    await store.set('photo:'+pid, JSON.stringify(photo));
-    const ix = await loadIndex();
-    if(!ix.combos[key]) ix.combos[key] = { colors: key.split('+'), photoIds: [] };
-    ix.combos[key].photoIds.push(pid);
-    await saveIndex(ix);
+    for(const url of dataUrls){ await savePhotoRecord(url, key); }
     close();
-    toast('Saved to ' + comboName(key.split('+')) + ' ✔');
+    toast(`Saved ${dataUrls.length} to ${comboName(colorIdsOf(key))} ✔`);
     renderAllPhotos();
+    renderFavCombos();
     if(state.current) renderComboSection();
-  };
+  }
+  saveBtn.onclick = () => saveAll(comboKey([...selected]));
+  ov.querySelector('#skipTagsBtn').onclick = () => saveAll('');
   document.body.appendChild(ov);
 }
 
@@ -825,6 +991,17 @@ favChip.onclick = () => {
 };
 sortChips.appendChild(favChip);
 
+state.uncatOnly = false;
+const uncatChip = document.createElement('button');
+uncatChip.className = 'chip';
+uncatChip.textContent = '🏷️ Untagged';
+uncatChip.onclick = () => {
+  state.uncatOnly = !state.uncatOnly;
+  uncatChip.classList.toggle('on', state.uncatOnly);
+  renderAllPhotos();
+};
+sortChips.appendChild(uncatChip);
+
 async function renderAllPhotos(){
   const grid = document.getElementById('allGrid');
   const hint = document.getElementById('allHint');
@@ -836,8 +1013,9 @@ async function renderAllPhotos(){
       const raw = await store.get('photo:'+pid);
       if(!raw) continue;
       let ph; try{ ph = JSON.parse(raw); }catch(e){ continue; }
-      const colorIds = ph.c.split('+');
+      const colorIds = colorIdsOf(ph.c);
       if(state.favOnly && !ph.f) continue;
+      if(state.uncatOnly && colorIds.length) continue;
       if(state.filterColors.length && !state.filterColors.every(id => colorIds.includes(id))) continue;
       if(state.filterMonth){
         const d = new Date(ph.t);
@@ -848,7 +1026,9 @@ async function renderAllPhotos(){
     }
   }
   hint.style.display = items.length ? 'none' : 'block';
-  if(state.favOnly && !items.length){
+  if(state.uncatOnly && !items.length){
+    hint.textContent = 'Nothing untagged — your archive is spotless. 🏷️✨';
+  } else if(state.favOnly && !items.length){
     hint.textContent = 'No favorite photos' + (state.filterColors.length || state.filterMonth ? ' matching those filters' : '') + ' yet — tap the ♡ on any photo to crown it.';
   } else if(state.filterMonth && !items.length){
     const [y,m] = state.filterMonth.split('-');
@@ -873,10 +1053,15 @@ async function renderAllPhotos(){
     }
     const cell = document.createElement('div');
     cell.className = 'photoCell';
+    const cids = colorIdsOf(it.ph.c);
+    const miniHtml = cids.length
+      ? cids.map(id=>`<span style="background:${byId[id].hex.medium}"></span>`).join('')
+      : '<span class="untagDot" title="Untagged"></span>';
     cell.innerHTML = `
-      <img src="${it.ph.d}" alt="Saved art — ${comboName(it.ph.c.split('+'))}">
+      <img src="${it.ph.d}" alt="Saved art — ${comboName(cids)}">
       ${it.ph.f ? '<span class="favBadge">♥</span>' : ''}
-      <div class="mini">${it.ph.c.split('+').map(id=>`<span style="background:${byId[id].hex.medium}"></span>`).join('')}</div>
+      ${it.ph.n ? '<span class="noteBadge">📝</span>' : ''}
+      <div class="mini">${miniHtml}</div>
       <div class="when">${d.toLocaleDateString(undefined,{month:'short', day:'numeric'})}</div>`;
     cell.onclick = () => openLightbox(it.pid, it.ph);
     grid.appendChild(cell);
