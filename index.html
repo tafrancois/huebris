@@ -103,7 +103,7 @@
   .comboBar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;}
   .addBtn{
     border:1.5px dashed var(--ink); background:transparent; font:inherit; font-weight:600; font-size:14px;
-    color:var(--ink); padding:9px 14px; border-radius:999px; cursor:pointer;
+    color:var(--ink); padding:9px 14px; border-radius:999px; cursor:pointer; white-space:nowrap;
   }
   .thumbGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
   .thumbGrid img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; cursor:pointer; display:block;}
@@ -122,11 +122,11 @@
   nav{
     position:fixed; bottom:0; left:0; right:0; background:rgba(244,244,241,.92);
     backdrop-filter:blur(10px); border-top:1px solid var(--line);
-    display:flex; justify-content:center; gap:8px; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    display:flex; justify-content:center; gap:4px; padding:10px 10px calc(10px + env(safe-area-inset-bottom));
   }
   nav button{
-    border:none; background:transparent; font:inherit; font-weight:600; color:var(--ink-soft);
-    padding:10px 22px; border-radius:999px; cursor:pointer;
+    border:none; background:transparent; font:inherit; font-weight:600; font-size:14px; color:var(--ink-soft);
+    padding:10px 12px; border-radius:999px; cursor:pointer; white-space:nowrap;
   }
   nav button.on{background:var(--ink); color:#fff;}
 
@@ -172,6 +172,7 @@
     position:fixed; left:50%; bottom:92px; transform:translateX(-50%);
     background:var(--ink); color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; font-weight:500;
     z-index:70; box-shadow:var(--shadow); animation:pop .3s both;
+    width:max-content; max-width:calc(100vw - 32px); text-align:center;
   }
   /* all photos grid */
   .allGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px;}
@@ -220,6 +221,80 @@
   }
   .dataBtn.solid{background:var(--ink); color:#fff;}
   .hint{font-size:13px; color:var(--ink-soft); text-align:center; margin:2px 0 16px;}
+
+  /* select / cross-out mode */
+  .modeSeg{margin-bottom:8px;}
+  .modeSeg button.on[data-m="out"]{background:#B3362B;}
+  .modeHint{font-size:13px; color:var(--ink-soft); margin:0 0 10px;}
+  .pinDot.out{opacity:.5; box-shadow:0 0 0 3px var(--paper), 0 0 0 6px #B3362B;}
+  .pinDot.out::after{
+    content:'✕'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:16px; text-shadow:0 1px 3px rgba(0,0,0,.6);
+  }
+
+  /* marker badge + spin extras */
+  .daub .mk{display:inline-flex; align-items:center; gap:5px; margin-top:5px; font-size:13px; font-weight:600; padding:3px 10px; border-radius:999px; background:var(--paper);}
+  .extra{
+    display:flex; align-items:center; gap:14px; background:var(--card); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:14px 16px; animation:pop .35s cubic-bezier(.2,1.4,.4,1) .2s both;
+  }
+  .extra .ico{width:52px; height:52px; flex:none; border-radius:16px; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:26px;}
+  .extra .k{font-size:12px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft);}
+  .extra .v{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:19px; line-height:1.2; overflow-wrap:anywhere;}
+  .extra .v.soft{font-family:'Outfit',sans-serif; font-weight:500; font-size:15px; color:var(--ink-soft);}
+
+  /* coloring book shelf */
+  .bookRow{display:flex; align-items:center; gap:6px; margin-bottom:8px;}
+  .bookBtn{
+    flex:1; min-width:0; display:flex; align-items:center; gap:10px; text-align:left; cursor:pointer;
+    border:1.5px solid var(--line); background:#fff; color:var(--ink); font:inherit; font-size:15px;
+    padding:10px 12px; border-radius:14px;
+  }
+  .bookBtn .t{overflow-wrap:anywhere;}
+  .bookBtn .mark{width:22px; height:22px; flex:none; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff;}
+  .bookBtn.in{border-color:var(--ink); font-weight:600;}
+  .bookBtn.in .mark{background:var(--ink); border-color:var(--ink);}
+  .bookBtn.out{color:var(--ink-soft); background:var(--paper);}
+  .bookBtn.out .t{text-decoration:line-through;}
+  .bookBtn.out .mark{background:#B3362B; border-color:#B3362B;}
+  .bookDel{flex:none; width:38px; height:38px; border:none; background:transparent; border-radius:50%; cursor:pointer; font-size:16px; color:var(--ink-soft);}
+  .bookAdd{display:flex; gap:8px; margin-top:6px;}
+  .textIn{
+    flex:1; min-width:0; font:inherit; font-size:15px; padding:10px 12px; border:1.5px solid var(--line);
+    border-radius:12px; background:#fff; color:var(--ink);
+  }
+  .miniBtn{border:none; background:var(--ink); color:#fff; font:inherit; font-weight:600; font-size:14px; padding:10px 16px; border-radius:12px; cursor:pointer; flex:none;}
+  .ghostChip{border-style:dashed;}
+
+  /* book picker (tag sheet + lightbox edit) */
+  .pick{display:flex; flex-wrap:wrap; gap:8px;}
+  .pick .chip.on{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .lightbox .pick .chip{background:#2A2825; color:#DEDBD5; border-color:#3C3936;}
+  .lightbox .pick .chip.on{background:#EDEBE5; color:var(--ink); border-color:#EDEBE5;}
+  .lightbox .textIn{background:#2A2825; color:#EDEBE5; border-color:#3C3936;}
+  .lightbox .miniBtn{background:#EDEBE5; color:var(--ink);}
+  .lightbox .infoLine{font-size:14px; opacity:.85; margin-bottom:4px;}
+  .pickAdd{display:flex; gap:8px; width:100%;}
+
+  /* swatches */
+  .swGrid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+  .folder{
+    display:flex; flex-direction:column; gap:10px; text-align:left; cursor:pointer; font:inherit; color:var(--ink);
+    background:var(--card); border:none; border-radius:var(--radius); box-shadow:var(--shadow); padding:14px;
+  }
+  .folder .tab{height:62px; border-radius:14px 14px 14px 14px; position:relative; overflow:hidden; display:flex; align-items:flex-end; justify-content:flex-end; padding:6px;}
+  .folder .tab::before{content:''; position:absolute; top:0; left:0; width:42%; height:12px; background:rgba(255,255,255,.28); border-radius:0 0 10px 0;}
+  .folder .tab .peek{width:34px; height:34px; border-radius:8px; object-fit:cover; border:2px solid #fff; margin-left:-12px; position:relative;}
+  .folder b{font-family:'Bricolage Grotesque',sans-serif; font-weight:800; font-size:17px; line-height:1.15;}
+  .folder small{color:var(--ink-soft); font-size:13px;}
+  .folder.empty{opacity:.55; box-shadow:none; border:1.5px dashed var(--line); background:transparent;}
+  .reviewItem{display:flex; gap:12px; align-items:flex-start; background:var(--card); border-radius:16px; padding:10px; margin-bottom:10px;}
+  .reviewItem img{width:84px; height:84px; object-fit:cover; border-radius:10px; flex:none;}
+  .reviewItem .pinRow{gap:6px;}
+  .reviewItem .pinDot{width:28px; height:28px;}
+  .reviewItem .pinDot.on{box-shadow:0 0 0 2px var(--card), 0 0 0 4px var(--ink);}
+  .reviewItem .pinDot.on::after{font-size:12px;}
+  .reviewItem .lab{font-size:12px; color:var(--ink-soft); margin-bottom:6px;}
   button:focus-visible{outline:3px solid #2E6FD6; outline-offset:2px;}
   @media (prefers-reduced-motion:reduce){ *{animation:none !important; transition:none !important;} }
 </style>
@@ -241,13 +316,41 @@
       <div class="label" style="margin-top:16px">Tones in the pool</div>
       <div class="row" id="toneChips"></div>
 
-      <div class="label" style="margin-top:16px">Always include <span style="text-transform:none; letter-spacing:0; font-weight:500">(tap to pin)</span></div>
+      <div class="label" style="margin-top:16px">Colors</div>
+      <div class="seg modeSeg" role="group" aria-label="Tap mode for colors">
+        <button data-m="in">✓ Select</button><button data-m="out">✕ Cross out</button>
+      </div>
+      <div class="modeHint" data-for="colors"></div>
       <div class="pinRow" id="pinRow"></div>
       <div class="pinStatus" id="pinStatus"></div>
 
       <div class="toggleRow">
         <div class="txt"><b>Shade nuance</b><span>“Dark red” instead of just “red”</span></div>
         <button class="switch" id="nuanceToggle" role="switch" aria-checked="false" aria-label="Shade nuance"></button>
+      </div>
+
+      <div class="label" style="margin-top:18px">Marker type</div>
+      <div class="seg" id="markerSeg"></div>
+      <div class="pinStatus" id="markerStatus"></div>
+    </div>
+
+    <div class="card" id="bookCard">
+      <div class="toggleRow" style="margin-top:0; margin-bottom:12px">
+        <div class="txt"><b>Coloring book</b><span>Let the spin pick which book too</span></div>
+        <button class="switch" id="bookToggle" role="switch" aria-checked="false" aria-label="Pick a coloring book"></button>
+      </div>
+      <div class="seg modeSeg" role="group" aria-label="Tap mode for books">
+        <button data-m="in">✓ Select</button><button data-m="out">✕ Cross out</button>
+      </div>
+      <div class="modeHint" data-for="books"></div>
+      <div id="bookList"></div>
+      <div class="row" style="justify-content:space-between; margin-top:2px">
+        <div class="pinStatus" id="bookStatus" style="margin:0; flex:1"></div>
+        <button class="chip" id="bookUseAll">Use all</button>
+      </div>
+      <div class="bookAdd">
+        <input class="textIn" id="bookInput" type="text" maxlength="80" placeholder="Add a coloring book title" aria-label="New coloring book title">
+        <button class="miniBtn" id="bookAddBtn">Add</button>
       </div>
     </div>
 
@@ -288,6 +391,8 @@
         <input type="month" id="monthPick" class="monthInput">
         <button class="chip" id="monthClear">Clear</button>
       </div>
+      <div class="label" style="margin-top:14px">Coloring book</div>
+      <select id="bookFilter" class="monthInput" style="width:100%" aria-label="Filter by coloring book"></select>
     </div>
     <div class="row" id="sortChips" style="justify-content:center; margin-bottom:14px"></div>
     <div class="hint" id="allHint" style="display:none"></div>
@@ -311,18 +416,27 @@
       </div>
     </div>
   </section>
+
+  <!-- SWATCHES VIEW -->
+  <section id="view-sw" style="display:none">
+    <button class="generate" id="swAddBtn" style="font-size:17px; padding:16px; margin:0 0 8px">📸 Add swatch pages</button>
+    <div class="hint" id="swHint">Snap your swatch pages — Hue-bris guesses the color folder for each one, and you can fix any guess before saving.</div>
+    <div class="swGrid" id="swGrid"></div>
+  </section>
 </main>
 
 <nav>
   <button id="tabGen" class="on">Generator</button>
   <button id="tabAll">All Photos</button>
   <button id="tabCol">Collection</button>
+  <button id="tabSw">Swatches</button>
 </nav>
 
 <input type="file" id="fileInput" accept="image/*" style="display:none">
 <input type="file" id="quickAddInput" accept="image/*" multiple style="display:none">
 <input type="file" id="tagAddInput" accept="image/*" multiple style="display:none">
 <input type="file" id="importInput" accept="application/json,.json" style="display:none">
+<input type="file" id="swInput" accept="image/*" multiple style="display:none">
 
 <script>
 /* ============ COLOR DATA ============ */
@@ -387,51 +501,106 @@ const store = (() => {
 const INDEX_KEY = 'daub-index-v1';
 async function loadIndex(){
   const raw = await store.get(INDEX_KEY);
-  if(!raw) return {combos:{}};
-  try{ return JSON.parse(raw); }catch(e){ return {combos:{}}; }
+  let ix = {combos:{}};
+  if(raw){ try{ ix = JSON.parse(raw); }catch(e){} }
+  if(!ix.combos) ix.combos = {};
+  if(!Array.isArray(ix.books)) ix.books = [];
+  return ix;
 }
 async function saveIndex(ix){ await store.set(INDEX_KEY, JSON.stringify(ix)); }
 
 /* ============ STATE ============ */
 let state = {
-  count: 2,
+  count: 3,
   tones: {warm:true, cool:true, neutral:true},
   nuance: false,
   pinned: [],          // color ids that must appear in every spin
-  current: null,       // [{id, shade}]
+  excluded: [],        // color ids crossed out of the pool
+  mode: 'in',          // 'in' = select, 'out' = cross out (shared by colors + books)
+  markerMode: 'off',   // 'off' | 'all' | 'each'
+  bookPick: false,
+  current: null,       // [{id, shade, m}]
+  spinMarker: null,    // marker type for the whole set when markerMode==='all'
+  spinBook: null,      // {status:'ok'|'none'|'empty'|'allout', id}
   view: 'gen',
 };
 
-/* pinned color picker */
+/* ============ PREFS (remembered between visits) ============ */
+const PREFS_KEY = 'huebris-prefs-v1';
+async function loadPrefs(){
+  try{ const p = JSON.parse(await store.get(PREFS_KEY) || '{}');
+    if(['off','all','each'].includes(p.markerMode)) state.markerMode = p.markerMode;
+    state.bookPick = !!p.bookPick;
+  }catch(e){}
+}
+function savePrefs(){ store.set(PREFS_KEY, JSON.stringify({markerMode:state.markerMode, bookPick:state.bookPick})); }
+
+/* ============ SELECT / CROSS-OUT MODE ============ */
+function setMode(m){
+  state.mode = m;
+  document.querySelectorAll('.modeSeg').forEach(seg=>{
+    seg.querySelectorAll('button').forEach(b=>{
+      const on = b.dataset.m === m;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  });
+  document.querySelectorAll('.modeHint').forEach(h=>{
+    const what = h.dataset.for === 'books' ? 'a book' : 'a color';
+    h.textContent = m === 'in'
+      ? `Tap ${what} to make it a must-pick. Tap again to release it.`
+      : `Tap ${what} to rule it out. Know what you DON'T want? Cross it off.`;
+  });
+}
+document.querySelectorAll('.modeSeg button').forEach(b=> b.onclick = () => setMode(b.dataset.m));
+
+/* color picker: select (always include) or cross out (never include) */
 const pinRow = document.getElementById('pinRow');
 const pinStatus = document.getElementById('pinStatus');
 COLORS.forEach(c=>{
   const b = document.createElement('button');
   b.className = 'pinDot';
+  b.dataset.id = c.id;
   b.style.background = c.hex.medium;
   b.title = c.name;
-  b.setAttribute('aria-label', 'Pin ' + c.name);
-  b.setAttribute('aria-pressed', 'false');
   b.onclick = () => {
-    const i = state.pinned.indexOf(c.id);
-    if(i >= 0){ state.pinned.splice(i,1); }
-    else {
-      if(state.pinned.length >= 7){ toast('Seven pins max — that IS the whole palette!'); return; }
-      state.pinned.push(c.id);
+    const pi = state.pinned.indexOf(c.id), xi = state.excluded.indexOf(c.id);
+    if(state.mode === 'in'){
+      if(pi >= 0){ state.pinned.splice(pi,1); }
+      else {
+        if(state.pinned.length >= 7){ toast('Seven pins max — that IS the whole palette!'); return; }
+        if(xi >= 0) state.excluded.splice(xi,1);
+        state.pinned.push(c.id);
+      }
+    } else {
+      if(xi >= 0){ state.excluded.splice(xi,1); }
+      else {
+        if(state.excluded.length >= COLORS.length - 1){ toast('Leave at least one color standing!'); return; }
+        if(pi >= 0) state.pinned.splice(pi,1);
+        state.excluded.push(c.id);
+      }
     }
-    const on = state.pinned.includes(c.id);
-    b.classList.toggle('on', on);
-    b.setAttribute('aria-pressed', String(on));
-    updatePinStatus();
+    paintPinDots();
   };
   pinRow.appendChild(b);
 });
-function updatePinStatus(){
-  pinStatus.textContent = state.pinned.length
-    ? 'Pinned: ' + state.pinned.map(id=>byId[id].name).join(', ')
-    : 'Nothing pinned — full random.';
+function paintPinDots(){
+  [...pinRow.children].forEach(b=>{
+    const id = b.dataset.id, name = byId[id].name;
+    const on = state.pinned.includes(id), out = state.excluded.includes(id);
+    b.classList.toggle('on', on);
+    b.classList.toggle('out', out);
+    b.setAttribute('aria-label', name + (on ? ', always included' : out ? ', crossed out' : ''));
+  });
+  updatePinStatus();
 }
-updatePinStatus();
+function updatePinStatus(){
+  const parts = [];
+  if(state.pinned.length) parts.push('Always: ' + state.pinned.map(id=>byId[id].name).join(', '));
+  if(state.excluded.length) parts.push('Crossed out: ' + state.excluded.map(id=>byId[id].name).join(', '));
+  pinStatus.textContent = parts.length ? parts.join(' · ') : 'Nothing selected or crossed out — full random.';
+}
+paintPinDots();
 
 /* ============ SETTINGS UI ============ */
 const countSeg = document.getElementById('countSeg');
@@ -465,6 +634,178 @@ nuanceToggle.onclick = () => {
   nuanceToggle.setAttribute('aria-checked', String(state.nuance));
 };
 
+/* ============ MARKER TYPE ============ */
+const MARKERS = {
+  water:   {name:'Water-based', icon:'💧'},
+  alcohol: {name:'Alcohol',     icon:'🧪'},
+};
+const MARKER_MODES = [
+  {id:'off',  name:'Off',        hint:'No marker type picked.'},
+  {id:'all',  name:'Whole set',  hint:'One marker type for every color in the spin.'},
+  {id:'each', name:'Per color',  hint:'Each color gets its own marker type — mix it up.'},
+];
+const markerSeg = document.getElementById('markerSeg');
+MARKER_MODES.forEach(mm=>{
+  const b = document.createElement('button');
+  b.textContent = mm.name;
+  b.dataset.id = mm.id;
+  b.onclick = () => { state.markerMode = mm.id; savePrefs(); paintMarkerSeg(); };
+  markerSeg.appendChild(b);
+});
+function paintMarkerSeg(){
+  [...markerSeg.children].forEach(b=>b.classList.toggle('on', b.dataset.id===state.markerMode));
+  document.getElementById('markerStatus').textContent = MARKER_MODES.find(m=>m.id===state.markerMode).hint;
+}
+const randMarker = () => Math.random() < .5 ? 'water' : 'alcohol';
+const markerLabel = k => `${MARKERS[k].icon} ${MARKERS[k].name}`;
+
+/* ============ COLORING BOOKS (stored in the index so they back up + travel) ============ */
+let booksCache = [];
+const bookTitle = id => { const b = booksCache.find(x=>x.id===id); return b ? b.title : ''; };
+async function refreshBooks(){
+  const ix = await loadIndex();
+  booksCache = ix.books;
+  renderBookShelf();
+  renderBookFilter();
+}
+async function addBook(raw){
+  const title = (raw||'').trim().replace(/\s+/g,' ');
+  if(!title){ toast('Type a title first!'); return null; }
+  const ix = await loadIndex();
+  const dup = ix.books.find(b=>b.title.toLowerCase()===title.toLowerCase());
+  if(dup){ toast('“' + dup.title + '” is already on your shelf'); return dup.id; }
+  const b = { id:'bk' + Date.now().toString(36) + Math.random().toString(36).slice(2,5), title };
+  ix.books.push(b);
+  await saveIndex(ix);
+  booksCache = ix.books;
+  renderBookShelf();
+  renderBookFilter();
+  toast('📖 Added “' + title + '”');
+  return b.id;
+}
+async function setBookState(id, st){
+  const ix = await loadIndex();
+  const b = ix.books.find(x=>x.id===id);
+  if(!b) return;
+  if(st) b.st = st; else delete b.st;
+  await saveIndex(ix);
+  booksCache = ix.books;
+  renderBookShelf();
+}
+async function deleteBook(id){
+  const t = bookTitle(id);
+  if(!confirm(`Remove “${t}” from your shelf?\n\nArt you tagged with it stays in your archive — it just loses the book tag.`)) return;
+  const ix = await loadIndex();
+  ix.books = ix.books.filter(b=>b.id!==id);
+  await saveIndex(ix);
+  booksCache = ix.books;
+  if(state.filterBook === id) state.filterBook = '';
+  renderBookShelf();
+  renderBookFilter();
+  toast('Removed “' + t + '”');
+}
+function bookPool(){
+  const pool = booksCache.filter(b=>b.st!=='out');
+  const sel = pool.filter(b=>b.st==='in');
+  return sel.length ? sel : pool;
+}
+function renderBookShelf(){
+  const list = document.getElementById('bookList');
+  list.innerHTML = '';
+  booksCache.forEach(bk=>{
+    const row = document.createElement('div');
+    row.className = 'bookRow';
+    const btn = document.createElement('button');
+    btn.className = 'bookBtn' + (bk.st ? ' ' + bk.st : '');
+    btn.innerHTML = `<span class="mark">${bk.st==='in' ? '✓' : bk.st==='out' ? '✕' : ''}</span><span class="t">${escapeHtml(bk.title)}</span>`;
+    btn.setAttribute('aria-label', bk.title + (bk.st==='in' ? ', selected' : bk.st==='out' ? ', crossed out' : ''));
+    btn.onclick = () => {
+      const target = state.mode;               // 'in' or 'out'
+      setBookState(bk.id, bk.st === target ? null : target);
+    };
+    const del = document.createElement('button');
+    del.className = 'bookDel';
+    del.textContent = '🗑';
+    del.setAttribute('aria-label', 'Delete ' + bk.title);
+    del.onclick = () => deleteBook(bk.id);
+    row.append(btn, del);
+    list.appendChild(row);
+  });
+  const status = document.getElementById('bookStatus');
+  const n = booksCache.length;
+  const sel = booksCache.filter(b=>b.st==='in').length;
+  const out = booksCache.filter(b=>b.st==='out').length;
+  if(!n) status.textContent = 'No books on the shelf yet — add one below.';
+  else if(!bookPool().length) status.textContent = 'Every book is crossed out — nothing left to pick!';
+  else if(sel) status.textContent = `Picking from ${sel} selected book${sel>1?'s':''}.`;
+  else if(out) status.textContent = `Picking from all except ${out} crossed out.`;
+  else status.textContent = `Picking from all ${n} book${n>1?'s':''}.`;
+  document.getElementById('bookUseAll').style.display = (sel || out) ? '' : 'none';
+}
+document.getElementById('bookUseAll').onclick = async () => {
+  const ix = await loadIndex();
+  ix.books.forEach(b=>delete b.st);
+  await saveIndex(ix);
+  booksCache = ix.books;
+  renderBookShelf();
+  toast('Using every book on the shelf 📚');
+};
+const bookInput = document.getElementById('bookInput');
+async function submitBook(){
+  const id = await addBook(bookInput.value);
+  if(id) bookInput.value = '';
+}
+document.getElementById('bookAddBtn').onclick = submitBook;
+bookInput.onkeydown = e => { if(e.key === 'Enter'){ e.preventDefault(); submitBook(); } };
+const bookToggle = document.getElementById('bookToggle');
+function paintBookToggle(){
+  bookToggle.classList.toggle('on', state.bookPick);
+  bookToggle.setAttribute('aria-checked', String(state.bookPick));
+}
+bookToggle.onclick = () => { state.bookPick = !state.bookPick; savePrefs(); paintBookToggle(); };
+
+/* reusable single-book picker (tag sheet + lightbox edit). Returns () => selected id */
+function bookPicker(wrap, initialId){
+  let sel = initialId && bookTitle(initialId) ? initialId : '';
+  let adding = false;
+  function draw(){
+    wrap.innerHTML = '';
+    wrap.classList.add('pick');
+    booksCache.forEach(bk=>{
+      const c = document.createElement('button');
+      c.type = 'button';
+      c.className = 'chip' + (sel===bk.id ? ' on' : '');
+      c.textContent = (sel===bk.id ? '📖 ' : '') + bk.title;
+      c.setAttribute('aria-pressed', String(sel===bk.id));
+      c.onclick = () => { sel = sel===bk.id ? '' : bk.id; draw(); };
+      wrap.appendChild(c);
+    });
+    if(adding){
+      const row = document.createElement('div');
+      row.className = 'pickAdd';
+      row.innerHTML = `<input class="textIn" type="text" maxlength="80" placeholder="New book title" aria-label="New book title"><button type="button" class="miniBtn">Add</button>`;
+      const inp = row.querySelector('input');
+      const go = async () => {
+        const id = await addBook(inp.value);
+        if(id){ sel = id; adding = false; draw(); }
+      };
+      row.querySelector('button').onclick = go;
+      inp.onkeydown = e => { if(e.key==='Enter'){ e.preventDefault(); go(); } };
+      wrap.appendChild(row);
+      setTimeout(()=>inp.focus(), 30);
+    } else {
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'chip ghostChip';
+      add.textContent = '+ New book';
+      add.onclick = () => { adding = true; draw(); };
+      wrap.appendChild(add);
+    }
+  }
+  draw();
+  return () => sel;
+}
+
 /* ============ GENERATE ============ */
 document.getElementById('genBtn').onclick = generate;
 function generate(){
@@ -474,19 +815,36 @@ function generate(){
   }
   // pinned colors always make the cut, even if their tone is toggled off
   const pinnedPick = state.pinned.map(id => byId[id]);
-  const pool = COLORS.filter(c => state.tones[c.tone] && !state.pinned.includes(c.id));
+  const pool = COLORS.filter(c => state.tones[c.tone] && !state.pinned.includes(c.id) && !state.excluded.includes(c.id));
   const need = state.count - pinnedPick.length;
   if(pool.length < need){
-    toast(`Not enough colors in the enabled tones to fill the rest — enable more tones or pick fewer colors.`);
+    toast(state.excluded.length
+      ? `Only ${pool.length + pinnedPick.length} color${pool.length + pinnedPick.length===1?'':'s'} left after cross-outs + tones — uncross one or pick fewer colors.`
+      : `Not enough colors in the enabled tones to fill the rest — enable more tones or pick fewer colors.`);
     return;
   }
   const picked = shuffle([...pinnedPick, ...shuffle([...pool]).slice(0, need)]);
   state.current = picked.map(c => ({
     id: c.id,
     shade: state.nuance ? SHADES[Math.floor(Math.random()*3)] : 'medium',
+    m: state.markerMode === 'each' ? randMarker() : null,
   }));
+  state.spinMarker = state.markerMode === 'all' ? randMarker() : null;
+  if(state.bookPick){
+    const bp = bookPool();
+    if(!booksCache.length) state.spinBook = {status:'empty'};
+    else if(!bp.length) state.spinBook = {status:'allout'};
+    else state.spinBook = {status:'ok', id: bp[Math.floor(Math.random()*bp.length)].id};
+  } else state.spinBook = null;
   renderPalette();
   renderComboSection();
+}
+function currentBookId(){ return state.spinBook && state.spinBook.status==='ok' ? state.spinBook.id : ''; }
+function currentMarkerNote(){
+  if(!state.current) return '';
+  if(state.spinMarker) return 'All ' + MARKERS[state.spinMarker].name.toLowerCase() + ' markers';
+  if(state.current.some(p=>p.m)) return state.current.map(p=>`${byId[p.id].name}: ${MARKERS[p.m].name.toLowerCase()}`).join(' · ');
+  return '';
 }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
@@ -502,9 +860,25 @@ function renderPalette(){
       <div>
         ${state.nuance ? `<div class="shade">${shadeLabel(p.shade)} shades of</div>` : ''}
         <div class="name">${c.name}</div>
+        ${p.m ? `<div class="mk">${markerLabel(p.m)} markers</div>` : ''}
       </div>`;
     el.appendChild(d);
   });
+  const extra = (ico, k, v, soft) => {
+    const x = document.createElement('div');
+    x.className = 'extra';
+    x.innerHTML = `<div class="ico">${ico}</div><div><div class="k">${k}</div><div class="v${soft?' soft':''}">${v}</div></div>`;
+    el.appendChild(x);
+  };
+  if(state.spinMarker){
+    extra(MARKERS[state.spinMarker].icon, 'Whole set in', MARKERS[state.spinMarker].name + ' markers');
+  }
+  const sb = state.spinBook;
+  if(sb){
+    if(sb.status==='ok') extra('📖', 'Color in', escapeHtml(bookTitle(sb.id)));
+    else if(sb.status==='empty') extra('📖', 'Coloring book', 'Your shelf is empty — add a book below the spin settings.', true);
+    else extra('📖', 'Coloring book', 'Every book is crossed out — uncross one to get a pick.', true);
+  }
 }
 
 /* ============ COMBO KEY + ART ============ */
@@ -603,7 +977,7 @@ fileInput.onchange = async () => {
     const dataUrl = await compressImage(file, 1200, 0.72);
     const pid = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
     const key = currentKey();
-    const photo = { d:dataUrl, c:key, s:currentShadeNote(), t:Date.now() };
+    const photo = { d:dataUrl, c:key, s:currentShadeNote(), m:currentMarkerNote(), b:currentBookId(), t:Date.now() };
     await store.set('photo:'+pid, JSON.stringify(photo));
     const ix = await loadIndex();
     if(!ix.combos[key]) ix.combos[key] = { colors: key.split('+'), photoIds: [] };
@@ -706,6 +1080,8 @@ function openLightbox(pid, ph){
       <div class="panel">
         <h3>${comboName(colorIdsOf(ph.c))}</h3>
         <div class="dateline">${ph.s ? ph.s + ' · ' : ''}Added ${dateStr()}</div>
+        ${ph.b && bookTitle(ph.b) ? `<div class="infoLine">📖 ${escapeHtml(bookTitle(ph.b))}</div>` : ''}
+        ${ph.m ? `<div class="infoLine">🖊️ ${escapeHtml(ph.m)}</div>` : ''}
         <div class="lblab">Notes</div>
         <div class="noteView${ph.n ? '' : ' empty'}">${ph.n ? escapeHtml(ph.n) : 'No notes yet — tap Edit to add one.'}</div>
         <div class="meta">
@@ -737,8 +1113,10 @@ function openLightbox(pid, ph){
         <div class="dateline">Added ${dateStr()}</div>
         <div class="lblab">Colors in this piece</div>
         <div class="editTags" id="editTags"></div>
+        <div class="lblab">Coloring book</div>
+        <div id="editBook"></div>
         <div class="lblab">Notes</div>
-        <textarea class="noteBox" id="noteBox" placeholder="e.g. only alcohol markers, gift for Kalina, the one where blending finally clicked…">${ph.n ? escapeHtml(ph.n) : ''}</textarea>
+        <textarea class="noteBox" id="noteBox" placeholder="e.g. a gift for a friend, the one where blending finally clicked…">${ph.n ? escapeHtml(ph.n) : ''}</textarea>
         <div class="meta">
           <button class="lb-save" id="saveEdit">Save changes</button>
           <button class="lb-cancel" id="cancelEdit">Cancel</button>
@@ -760,6 +1138,7 @@ function openLightbox(pid, ph){
       };
       tagWrap.appendChild(b);
     });
+    const getBook = bookPicker(lb.querySelector('#editBook'), ph.b);
     lb.querySelector('#cancelEdit').onclick = render;
     lb.querySelector('#saveEdit').onclick = async () => {
       if(!selected.size){ toast('Pick at least one color.'); return; }
@@ -767,6 +1146,7 @@ function openLightbox(pid, ph){
       const oldKey = ph.c;
       const newNote = lb.querySelector('#noteBox').value.trim();
       ph.n = newNote;
+      ph.b = getBook();
       if(newKey !== oldKey){
         // move photo to the new combo in the index
         const ix = await loadIndex();
@@ -831,10 +1211,22 @@ document.getElementById('monthClear').onclick = () => {
   monthPick.value = ''; state.filterMonth = ''; renderAllPhotos();
 };
 
+/* book filter */
+state.filterBook = '';   // '' = all, '__none' = no book, else a book id
+const bookFilter = document.getElementById('bookFilter');
+function renderBookFilter(){
+  if(state.filterBook && state.filterBook!=='__none' && !bookTitle(state.filterBook)) state.filterBook = '';
+  bookFilter.innerHTML = `<option value="">All books</option>`
+    + booksCache.map(b=>`<option value="${b.id}">📖 ${escapeHtml(b.title)}</option>`).join('')
+    + `<option value="__none">No book tagged</option>`;
+  bookFilter.value = state.filterBook;
+}
+bookFilter.onchange = () => { state.filterBook = bookFilter.value; renderAllPhotos(); };
+
 /* ---- shared saver ---- */
-async function savePhotoRecord(dataUrl, key){
+async function savePhotoRecord(dataUrl, key, bookId){
   const pid = Date.now().toString(36) + Math.random().toString(36).slice(2,6) + Math.floor(Math.random()*1000);
-  const photo = { d:dataUrl, c:key, s:'', n:'', t:Date.now() };
+  const photo = { d:dataUrl, c:key, s:'', n:'', b:bookId||'', t:Date.now() };
   await store.set('photo:'+pid, JSON.stringify(photo));
   const ix = await loadIndex();
   if(!ix.combos[key]) ix.combos[key] = { colors: colorIdsOf(key), photoIds: [] };
@@ -897,6 +1289,8 @@ function openTagSheet(dataUrls){
       ${previews}
       <div class="pinRow" id="tagRow"></div>
       <div class="pinStatus" id="tagStatus">Nothing tagged yet.</div>
+      <div class="label" style="margin-top:14px">Coloring book <span style="text-transform:none; letter-spacing:0; font-weight:500">(optional)</span></div>
+      <div id="tagBook"></div>
       <button class="saveTagsBtn" id="saveTagsBtn" disabled>${many ? `Save ${dataUrls.length} to archive` : 'Save to archive'}</button>
       <button class="saveTagsBtn" id="skipTagsBtn" style="background:transparent; color:var(--ink-soft); border:1.5px solid var(--line); margin-top:8px">Skip — save as Uncategorized</button>
     </div>`;
@@ -925,9 +1319,11 @@ function openTagSheet(dataUrls){
     };
     tagRow.appendChild(b);
   });
+  const getBook = bookPicker(ov.querySelector('#tagBook'), '');
   async function saveAll(key){
     saveBtn.disabled = true;
-    for(const url of dataUrls){ await savePhotoRecord(url, key); }
+    const bk = getBook();
+    for(const url of dataUrls){ await savePhotoRecord(url, key, bk); }
     close();
     toast(`Saved ${dataUrls.length} to ${comboName(colorIdsOf(key))} ✔`);
     renderAllPhotos();
@@ -1017,6 +1413,10 @@ async function renderAllPhotos(){
       if(state.favOnly && !ph.f) continue;
       if(state.uncatOnly && colorIds.length) continue;
       if(state.filterColors.length && !state.filterColors.every(id => colorIds.includes(id))) continue;
+      if(state.filterBook){
+        const bk = ph.b && bookTitle(ph.b) ? ph.b : '';
+        if(state.filterBook === '__none' ? bk : bk !== state.filterBook) continue;
+      }
       if(state.filterMonth){
         const d = new Date(ph.t);
         const mk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
@@ -1034,6 +1434,10 @@ async function renderAllPhotos(){
     const [y,m] = state.filterMonth.split('-');
     const label = new Date(y, m-1, 1).toLocaleDateString(undefined,{month:'long', year:'numeric'});
     hint.textContent = 'Nothing from ' + label + (state.filterColors.length ? ' with those colors' : '') + '.';
+  } else if(state.filterBook && !items.length){
+    hint.textContent = state.filterBook === '__none'
+      ? 'Every piece here has a book tag. 📚'
+      : 'Nothing from “' + bookTitle(state.filterBook) + '”' + (state.filterColors.length ? ' with those colors' : '') + ' yet — open a piece and tap Edit to tag it.';
   } else {
     hint.textContent = state.filterColors.length
       ? 'No art with ' + state.filterColors.map(id=>byId[id].name).join(' + ') + ' yet — sounds like a challenge. 👀'
@@ -1068,21 +1472,288 @@ async function renderAllPhotos(){
   }
 }
 
+/* ============ SWATCHES ============ */
+const SW_KEY = 'huebris-swatches-v1';
+async function loadSwIndex(){
+  let ix = {items:[]};
+  const raw = await store.get(SW_KEY);
+  if(raw){ try{ ix = JSON.parse(raw); }catch(e){} }
+  if(!Array.isArray(ix.items)) ix.items = [];
+  return ix;
+}
+async function saveSwIndex(ix){ await store.set(SW_KEY, JSON.stringify(ix)); }
+
+function loadImg(src){ return new Promise((res,rej)=>{ const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function drawScaled(img, max){
+  const s = Math.min(1, max / Math.max(img.width, img.height));
+  const cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(img.width*s)); cv.height = Math.max(1, Math.round(img.height*s));
+  cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+  return cv;
+}
+
+/* guess which color folders a swatch page belongs in, from its pixels */
+const REF = [];
+COLORS.forEach(c=>SHADES.forEach(s=>{
+  const h = c.hex[s];
+  REF.push({id:c.id, r:parseInt(h.slice(1,3),16), g:parseInt(h.slice(3,5),16), b:parseInt(h.slice(5,7),16)});
+}));
+function rgb2hsl(r,g,b){
+  r/=255; g/=255; b/=255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), l = (mx+mn)/2;
+  if(mx===mn) return [0,0,l];
+  const d = mx-mn;
+  return [0, l>.5 ? d/(2-mx-mn) : d/(mx+mn), l];
+}
+function detectColors(cv){
+  const {data} = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height);
+  const counts = {}; let total = 0;
+  for(let i=0; i<data.length; i+=4){
+    const r = data[i], g = data[i+1], b = data[i+2];
+    const [, s, l] = rgb2hsl(r,g,b);
+    if(l > .92) continue;                       // glare / bright paper
+    if(l > .8 && s < .5) continue;              // off-white paper under warm light
+    if(l < .12 || s < .16){                     // blacks + grays
+      if(l < .55){ counts.grayblack = (counts.grayblack||0) + .6; total += .6; }
+      continue;
+    }
+    let best = null, bd = Infinity;
+    for(const p of REF){
+      if(p.id === 'grayblack') continue;
+      const rm = (r+p.r)/2, dr = r-p.r, dg = g-p.g, db = b-p.b;
+      const d = (2+rm/256)*dr*dr + 4*dg*dg + (2+(255-rm)/256)*db*db;
+      if(d < bd){ bd = d; best = p.id; }
+    }
+    counts[best] = (counts[best]||0) + 1; total++;
+  }
+  if(total < (data.length/4) * .03) return [];
+  return Object.entries(counts).filter(([,n]) => n/total >= .2).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id])=>id);
+}
+
+const swInput = document.getElementById('swInput');
+document.getElementById('swAddBtn').onclick = () => swInput.click();
+swInput.onchange = async () => {
+  const files = [...swInput.files];
+  swInput.value = '';
+  if(!files.length) return;
+  const items = [];
+  for(let i=0; i<files.length; i++){
+    toast(files.length > 1 ? `Reading page ${i+1} of ${files.length}…` : 'Reading page…');
+    try{
+      const d = await compressImage(files[i], 1600, 0.8);
+      const img = await loadImg(d);
+      const th = drawScaled(img, 260).toDataURL('image/jpeg', 0.7);
+      const c = new Set(detectColors(drawScaled(img, 90)));
+      items.push({d, th, c});
+    }catch(e){ console.error(e); }
+  }
+  if(items.length) openSwatchReview(items);
+  else toast('Could not read those images — try again?');
+};
+
+function colorDotRow(wrap, selected, onChange){
+  COLORS.forEach(c=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pinDot' + (selected.has(c.id) ? ' on' : '');
+    b.style.background = c.hex.medium;
+    b.title = c.name;
+    b.setAttribute('aria-label', c.name);
+    b.setAttribute('aria-pressed', String(selected.has(c.id)));
+    b.onclick = () => {
+      selected.has(c.id) ? selected.delete(c.id) : selected.add(c.id);
+      const on = selected.has(c.id);
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+      onChange && onChange();
+    };
+    wrap.appendChild(b);
+  });
+}
+const folderText = set => set.size ? 'Goes in: ' + COLORS.filter(c=>set.has(c.id)).map(c=>c.name).join(', ') : 'No guess — goes to Unsorted (or tap a color)';
+
+function openSwatchReview(items){
+  const n = items.length;
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.innerHTML = `
+    <div class="sheet">
+      <button class="closeX" aria-label="Cancel">✕</button>
+      <h2>Sort your swatches</h2>
+      <div class="sub">${n} page${n>1?'s':''} — I took a guess at each folder. Tap dots to fix anything I got wrong. A page can go in more than one folder.</div>
+      <div id="swReview"></div>
+      <button class="saveTagsBtn" id="swSave">Save ${n} page${n>1?'s':''} to folders</button>
+    </div>`;
+  const close = () => ov.remove();
+  ov.querySelector('.closeX').onclick = () => { if(confirm('Discard these pages without saving?')) close(); };
+  const list = ov.querySelector('#swReview');
+  items.forEach(it=>{
+    const row = document.createElement('div');
+    row.className = 'reviewItem';
+    row.innerHTML = `<img src="${it.th}" alt="Swatch page"><div style="flex:1; min-width:0"><div class="lab"></div><div class="pinRow"></div></div>`;
+    const lab = row.querySelector('.lab');
+    lab.textContent = folderText(it.c);
+    colorDotRow(row.querySelector('.pinRow'), it.c, () => { lab.textContent = folderText(it.c); });
+    list.appendChild(row);
+  });
+  ov.querySelector('#swSave').onclick = async (e) => {
+    e.target.disabled = true;
+    const ix = await loadSwIndex();
+    for(const it of items){
+      const id = 'sw' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+      const t = Date.now();
+      await store.set('swatch:'+id, JSON.stringify({d:it.d, t}));
+      ix.items.push({id, c:COLORS.filter(c=>it.c.has(c.id)).map(c=>c.id), th:it.th, t});
+    }
+    await saveSwIndex(ix);
+    close();
+    toast(`Filed ${n} swatch page${n>1?'s':''} 📁`);
+    renderSwatches();
+  };
+  document.body.appendChild(ov);
+}
+
+async function renderSwatches(){
+  const ix = await loadSwIndex();
+  const grid = document.getElementById('swGrid');
+  const n = ix.items.length;
+  document.getElementById('swHint').textContent = n
+    ? `${n} swatch page${n>1?'s':''} filed. Open a folder to flip through them.`
+    : 'Snap your swatch pages — Hue-bris guesses the color folder for each one, and you can fix any guess before saving.';
+  grid.innerHTML = '';
+  const folders = COLORS.map(c=>({id:c.id, name:c.name, bg:c.hex.medium, items:ix.items.filter(it=>it.c.includes(c.id))}));
+  const unsorted = ix.items.filter(it=>!it.c.length);
+  if(unsorted.length) folders.push({id:'', name:'Unsorted', bg:'#B9B6AE', items:unsorted});
+  folders.forEach(f=>{
+    const k = f.items.length;
+    const b = document.createElement('button');
+    b.className = 'folder' + (k ? '' : ' empty');
+    const peeks = f.items.slice(-3).reverse().map(it=>`<img class="peek" src="${it.th}" alt="">`).join('');
+    b.innerHTML = `<div class="tab" style="background:${f.bg}">${peeks}</div><div><b>${f.name}</b><br><small>${k ? k + ' page' + (k>1?'s':'') : 'empty'}</small></div>`;
+    b.setAttribute('aria-label', `${f.name} swatches, ${k} page${k===1?'':'s'}`);
+    b.onclick = () => k ? openSwFolder(f) : toast(`No ${f.name.toLowerCase()} swatches yet — tap “Add swatch pages”.`);
+    grid.appendChild(b);
+  });
+}
+
+function openSwFolder(f){
+  const list = [...f.items].reverse();
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.innerHTML = `
+    <div class="sheet">
+      <button class="closeX" aria-label="Close">✕</button>
+      <h2>${f.name} swatches</h2>
+      <div class="sub">${list.length} page${list.length>1?'s':''} · tap one to view it full-size</div>
+      <div class="thumbGrid" id="swFolderGrid"></div>
+    </div>`;
+  ov.querySelector('.closeX').onclick = () => ov.remove();
+  ov.onclick = e => { if(e.target===ov) ov.remove(); };
+  const g = ov.querySelector('#swFolderGrid');
+  list.forEach((it, i)=>{
+    const img = document.createElement('img');
+    img.src = it.th; img.alt = f.name + ' swatch page ' + (i+1);
+    img.onclick = () => openSwViewer(list, i, f.name, () => { ov.remove(); });
+    g.appendChild(img);
+  });
+  document.body.appendChild(ov);
+}
+
+function openSwViewer(list, idx, folderName, onChanged){
+  const lb = document.createElement('div');
+  lb.className = 'lightbox';
+  let editing = false;
+  async function draw(){
+    const it = list[idx];
+    let full = it.th;
+    try{ const raw = await store.get('swatch:'+it.id); if(raw) full = JSON.parse(raw).d; }catch(e){}
+    const dots = it.c.length
+      ? it.c.map(id=>`<span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:${byId[id].hex.medium}; vertical-align:-2px; margin-right:4px"></span>${byId[id].name}`).join(' &nbsp; ')
+      : 'Unsorted';
+    lb.innerHTML = `
+      <img class="lbImg" src="${full}" alt="${folderName} swatch page">
+      <div class="panel">
+        <h3>${folderName} swatches</h3>
+        <div class="dateline">Page ${idx+1} of ${list.length} · added ${new Date(it.t).toLocaleDateString(undefined,{month:'short', day:'numeric', year:'numeric'})}</div>
+        ${editing ? `<div class="lblab">Folders for this page</div><div class="editTags" id="swEditDots"></div>` : `<div class="infoLine">📁 ${dots}</div>`}
+        <div class="meta">
+          ${editing
+            ? `<button class="lb-save" id="swSaveF">Save folders</button><button class="lb-cancel" id="swCancelF">Cancel</button>`
+            : `<button class="lb-edit" id="swPrev" ${idx===0?'disabled style="opacity:.35"':''} aria-label="Previous page">‹ Prev</button>
+               <button class="lb-edit" id="swNext" ${idx===list.length-1?'disabled style="opacity:.35"':''} aria-label="Next page">Next ›</button>
+               <button class="lb-edit" id="swEdit">Folders</button>
+               <button class="lb-del" id="swDel">Delete</button>
+               <button class="lb-close" id="swClose">Close</button>`}
+        </div>
+      </div>`;
+    if(editing){
+      const sel = new Set(it.c);
+      colorDotRow(lb.querySelector('#swEditDots'), sel);
+      lb.querySelector('#swCancelF').onclick = () => { editing = false; draw(); };
+      lb.querySelector('#swSaveF').onclick = async () => {
+        const ix = await loadSwIndex();
+        const rec = ix.items.find(x=>x.id===it.id);
+        it.c = COLORS.filter(c=>sel.has(c.id)).map(c=>c.id);
+        if(rec) rec.c = it.c;
+        await saveSwIndex(ix);
+        editing = false;
+        toast(it.c.length ? 'Refiled ✔' : 'Moved to Unsorted');
+        renderSwatches(); onChanged && onChanged();
+        draw();
+      };
+      return;
+    }
+    lb.querySelector('#swPrev').onclick = () => go(-1);
+    lb.querySelector('#swNext').onclick = () => go(1);
+    lb.querySelector('#swClose').onclick = () => lb.remove();
+    lb.querySelector('#swEdit').onclick = () => { editing = true; draw(); };
+    lb.querySelector('#swDel').onclick = async () => {
+      if(!confirm('Delete this swatch page from every folder?')) return;
+      await store.del('swatch:'+it.id);
+      const ix = await loadSwIndex();
+      ix.items = ix.items.filter(x=>x.id!==it.id);
+      await saveSwIndex(ix);
+      list.splice(idx,1);
+      renderSwatches(); onChanged && onChanged();
+      toast('Deleted');
+      if(!list.length){ lb.remove(); return; }
+      idx = Math.min(idx, list.length-1);
+      draw();
+    };
+  }
+  function go(d){ const j = idx + d; if(j<0 || j>=list.length) return; idx = j; draw(); }
+  let sx = null, sy = null;
+  lb.addEventListener('touchstart', e => { if(editing) return; sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+  lb.addEventListener('touchend', e => {
+    if(sx===null) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    sx = null;
+    if(Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)*1.5) go(dx < 0 ? 1 : -1);
+  });
+  draw();
+  document.body.appendChild(lb);
+}
+
 /* ============ TABS + TOAST ============ */
-const tabGen = document.getElementById('tabGen'), tabCol = document.getElementById('tabCol'), tabAll = document.getElementById('tabAll');
+const tabGen = document.getElementById('tabGen'), tabCol = document.getElementById('tabCol'), tabAll = document.getElementById('tabAll'), tabSw = document.getElementById('tabSw');
 tabGen.onclick = () => switchView('gen');
 tabAll.onclick = () => switchView('all');
 tabCol.onclick = () => switchView('col');
+tabSw.onclick = () => switchView('sw');
 function switchView(v){
   state.view = v;
   document.getElementById('view-gen').style.display = v==='gen' ? 'block' : 'none';
   document.getElementById('view-all').style.display = v==='all' ? 'block' : 'none';
   document.getElementById('view-col').style.display = v==='col' ? 'block' : 'none';
+  document.getElementById('view-sw').style.display = v==='sw' ? 'block' : 'none';
   tabGen.classList.toggle('on', v==='gen');
   tabAll.classList.toggle('on', v==='all');
   tabCol.classList.toggle('on', v==='col');
+  tabSw.classList.toggle('on', v==='sw');
   if(v==='col') renderCollection();
   if(v==='all') renderAllPhotos();
+  if(v==='sw') renderSwatches();
+  window.scrollTo(0,0);
 }
 
 let toastTimer = null;
@@ -1108,7 +1779,13 @@ async function exportData(){
       if(raw){ photos[pid] = raw; n++; }
     }
   }
-  const payload = { app:'hue-bris', v:1, exported:Date.now(), index:ix, photos };
+  const swIx = await loadSwIndex();
+  const swPhotos = {};
+  for(const it of swIx.items){
+    const raw = await store.get('swatch:'+it.id);
+    if(raw){ swPhotos[it.id] = raw; n++; }
+  }
+  const payload = { app:'hue-bris', v:2, exported:Date.now(), index:ix, photos, swatches:{index:swIx, photos:swPhotos} };
   const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1154,8 +1831,29 @@ importInput.onchange = async () => {
           ix2.combos[k].fav = true;
         }
       }
+      // coloring books (merge by id, keep any already here)
+      if(Array.isArray(payload.index.books)){
+        for(const b of payload.index.books){
+          if(b && b.id && b.title && !ix2.books.some(x=>x.id===b.id)) ix2.books.push({id:b.id, title:b.title});
+        }
+      }
       await saveIndex(ix2);
     }
+    // swatch pages
+    if(payload.swatches && payload.swatches.index && Array.isArray(payload.swatches.index.items)){
+      const sw = await loadSwIndex();
+      for(const it of payload.swatches.index.items){
+        if(!it || !it.id || sw.items.some(x=>x.id===it.id)) continue;
+        const raw = payload.swatches.photos && payload.swatches.photos[it.id];
+        if(!raw) continue;
+        await store.set('swatch:'+it.id, raw);
+        sw.items.push({id:it.id, c:Array.isArray(it.c) ? it.c.filter(id=>byId[id]) : [], th:it.th, t:it.t||Date.now()});
+        added++;
+      }
+      await saveSwIndex(sw);
+    }
+    await refreshBooks();
+    if(state.view==='sw') renderSwatches();
     renderCollection();
     renderFavCombos();
     if(state.current) renderComboSection();
@@ -1171,9 +1869,16 @@ if('serviceWorker' in navigator){
   try{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }catch(e){}
 }
 
-/* first spin so the page never opens empty */
-generate();
-renderFavCombos();
+/* boot: load remembered settings + the book shelf, then a first spin so the page never opens empty */
+(async () => {
+  setMode('in');
+  await loadPrefs();
+  paintMarkerSeg();
+  paintBookToggle();
+  await refreshBooks();
+  generate();
+  renderFavCombos();
+})();
 </script>
 </body>
 </html>
