@@ -275,6 +275,20 @@
   .lightbox .miniBtn{background:#EDEBE5; color:var(--ink);}
   .lightbox .infoLine{font-size:14px; opacity:.85; margin-bottom:4px;}
   .pickAdd{display:flex; gap:8px; width:100%;}
+  .cover{width:40px; height:52px; border-radius:6px; object-fit:cover; flex:none; box-shadow:0 1px 4px rgba(0,0,0,.18); display:block;}
+  .bookBtn.out .cover{opacity:.45; filter:grayscale(1);}
+  .coverTile{
+    width:52px; height:68px; flex:none; border-radius:8px; border:1.5px dashed var(--ink-soft); cursor:pointer;
+    background:var(--card) center/cover no-repeat; font-size:20px; display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .coverTile.has{border:none; box-shadow:0 1px 4px rgba(0,0,0,.2); font-size:0;}
+  .coverTile.small{width:44px; height:44px; border-radius:12px; font-size:18px;}
+  .bookEdit{background:var(--paper); border-radius:14px; padding:10px; margin-bottom:8px;}
+  .bookEdit .top{display:flex; gap:10px; align-items:center;}
+  .bookEdit .acts{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; align-items:center;}
+  .chip .cv{width:18px; height:24px; border-radius:3px; object-fit:cover;}
+  .extra .ico.coverIco{height:68px; padding:0; overflow:hidden; border-radius:10px;}
+  .extra .ico.coverIco img{width:100%; height:100%; object-fit:cover;}
 
   /* swatches */
   .swGrid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
@@ -349,6 +363,7 @@
         <button class="chip" id="bookUseAll">Use all</button>
       </div>
       <div class="bookAdd">
+        <button class="coverTile small" id="bookCoverBtn" aria-label="Add a cover picture for the new book">📷</button>
         <input class="textIn" id="bookInput" type="text" maxlength="80" placeholder="Add a coloring book title" aria-label="New coloring book title">
         <button class="miniBtn" id="bookAddBtn">Add</button>
       </div>
@@ -437,6 +452,7 @@
 <input type="file" id="tagAddInput" accept="image/*" multiple style="display:none">
 <input type="file" id="importInput" accept="application/json,.json" style="display:none">
 <input type="file" id="swInput" accept="image/*" multiple style="display:none">
+<input type="file" id="coverInput" accept="image/*" style="display:none">
 
 <script>
 /* ============ COLOR DATA ============ */
@@ -668,13 +684,14 @@ async function refreshBooks(){
   renderBookShelf();
   renderBookFilter();
 }
-async function addBook(raw){
+async function addBook(raw, cover){
   const title = (raw||'').trim().replace(/\s+/g,' ');
   if(!title){ toast('Type a title first!'); return null; }
   const ix = await loadIndex();
   const dup = ix.books.find(b=>b.title.toLowerCase()===title.toLowerCase());
   if(dup){ toast('“' + dup.title + '” is already on your shelf'); return dup.id; }
   const b = { id:'bk' + Date.now().toString(36) + Math.random().toString(36).slice(2,5), title };
+  if(cover) b.cv = cover;
   ix.books.push(b);
   await saveIndex(ix);
   booksCache = ix.books;
@@ -682,6 +699,49 @@ async function addBook(raw){
   renderBookFilter();
   toast('📖 Added “' + title + '”');
   return b.id;
+}
+async function renameBook(id, raw, cover){
+  const title = (raw||'').trim().replace(/\s+/g,' ');
+  if(!title){ toast('A book needs a title!'); return false; }
+  const ix = await loadIndex();
+  const b = ix.books.find(x=>x.id===id);
+  if(!b) return false;
+  const dup = ix.books.find(x=>x.id!==id && x.title.toLowerCase()===title.toLowerCase());
+  if(dup){ toast('“' + dup.title + '” is already on your shelf'); return false; }
+  const old = b.title;
+  b.title = title;
+  let coverChanged = false;
+  if(cover === null && b.cv){ delete b.cv; coverChanged = true; }
+  else if(cover && cover !== b.cv){ b.cv = cover; coverChanged = true; }
+  await saveIndex(ix);
+  booksCache = ix.books;
+  editingBook = null;
+  renderBookShelf();
+  renderBookFilter();
+  if(state.current) renderPalette();
+  if(state.view==='all') renderAllPhotos();
+  if(old !== title) toast('Renamed to “' + title + '” ✔');
+  else if(coverChanged) toast(cover ? 'Cover saved 📚' : 'Cover removed');
+  return true;
+}
+let editingBook = null;   // {id, title, cover}  cover: undefined = unchanged, null = remove
+const bookCover = id => { const b = booksCache.find(x=>x.id===id); return b && b.cv ? b.cv : ''; };
+
+/* shared cover picker */
+const coverInput = document.getElementById('coverInput');
+let coverCb = null;
+function pickCover(cb){ coverCb = cb; coverInput.click(); }
+coverInput.onchange = async () => {
+  const f = coverInput.files[0];
+  coverInput.value = '';
+  const cb = coverCb; coverCb = null;
+  if(!f || !cb) return;
+  try{ cb(await compressImage(f, 320, 0.78)); }
+  catch(e){ console.error(e); toast('Could not read that image — try another?'); }
+};
+function paintCoverTile(el, src){
+  el.classList.toggle('has', !!src);
+  el.style.backgroundImage = src ? `url("${src}")` : '';
 }
 async function setBookState(id, st){
   const ix = await loadIndex();
@@ -715,9 +775,43 @@ function renderBookShelf(){
   booksCache.forEach(bk=>{
     const row = document.createElement('div');
     row.className = 'bookRow';
+    if(editingBook && editingBook.id === bk.id){
+      const dr = editingBook;
+      const shown = dr.cover === null ? '' : (dr.cover || bk.cv || '');
+      row.className = 'bookEdit';
+      row.innerHTML = `
+        <div class="top">
+          <button class="coverTile" aria-label="${shown ? 'Change cover picture' : 'Add a cover picture'}">📷</button>
+          <input class="textIn" type="text" maxlength="80" aria-label="Book title">
+        </div>
+        <div class="acts">
+          <button class="miniBtn" data-a="save">Save</button>
+          ${shown ? '<button class="chip" data-a="rm">Remove cover</button>' : ''}
+          <button class="chip" data-a="cancel">Cancel</button>
+        </div>`;
+      const tile = row.querySelector('.coverTile');
+      paintCoverTile(tile, shown);
+      const inp = row.querySelector('input');
+      inp.value = dr.title;
+      inp.oninput = () => { dr.title = inp.value; };
+      tile.onclick = () => pickCover(d => { dr.cover = d; renderBookShelf(); });
+      const save = () => renameBook(bk.id, dr.title, dr.cover);
+      const cancel = () => { editingBook = null; renderBookShelf(); };
+      row.querySelector('[data-a="save"]').onclick = save;
+      row.querySelector('[data-a="cancel"]').onclick = cancel;
+      const rm = row.querySelector('[data-a="rm"]');
+      if(rm) rm.onclick = () => { dr.cover = null; renderBookShelf(); };
+      inp.onkeydown = e => {
+        if(e.key === 'Enter'){ e.preventDefault(); save(); }
+        if(e.key === 'Escape') cancel();
+      };
+      list.appendChild(row);
+      if(!dr.focused){ dr.focused = true; setTimeout(()=>{ inp.focus(); inp.select(); }, 30); }
+      return;
+    }
     const btn = document.createElement('button');
     btn.className = 'bookBtn' + (bk.st ? ' ' + bk.st : '');
-    btn.innerHTML = `<span class="mark">${bk.st==='in' ? '✓' : bk.st==='out' ? '✕' : ''}</span><span class="t">${escapeHtml(bk.title)}</span>`;
+    btn.innerHTML = `<span class="mark">${bk.st==='in' ? '✓' : bk.st==='out' ? '✕' : ''}</span>${bk.cv ? `<img class="cover" src="${bk.cv}" alt="">` : ''}<span class="t">${escapeHtml(bk.title)}</span>`;
     btn.setAttribute('aria-label', bk.title + (bk.st==='in' ? ', selected' : bk.st==='out' ? ', crossed out' : ''));
     btn.onclick = () => {
       const target = state.mode;               // 'in' or 'out'
@@ -728,7 +822,12 @@ function renderBookShelf(){
     del.textContent = '🗑';
     del.setAttribute('aria-label', 'Delete ' + bk.title);
     del.onclick = () => deleteBook(bk.id);
-    row.append(btn, del);
+    const ed = document.createElement('button');
+    ed.className = 'bookDel';
+    ed.textContent = '✏️';
+    ed.setAttribute('aria-label', 'Edit ' + bk.title);
+    ed.onclick = () => { editingBook = {id:bk.id, title:bk.title}; renderBookShelf(); };
+    row.append(btn, ed, del);
     list.appendChild(row);
   });
   const status = document.getElementById('bookStatus');
@@ -751,9 +850,12 @@ document.getElementById('bookUseAll').onclick = async () => {
   toast('Using every book on the shelf 📚');
 };
 const bookInput = document.getElementById('bookInput');
+let pendingCover = '';
+const bookCoverBtn = document.getElementById('bookCoverBtn');
+bookCoverBtn.onclick = () => pickCover(d => { pendingCover = d; paintCoverTile(bookCoverBtn, d); toast('Cover ready — now type the title'); bookInput.focus(); });
 async function submitBook(){
-  const id = await addBook(bookInput.value);
-  if(id) bookInput.value = '';
+  const id = await addBook(bookInput.value, pendingCover);
+  if(id){ bookInput.value = ''; pendingCover = ''; paintCoverTile(bookCoverBtn, ''); }
 }
 document.getElementById('bookAddBtn').onclick = submitBook;
 bookInput.onkeydown = e => { if(e.key === 'Enter'){ e.preventDefault(); submitBook(); } };
@@ -775,7 +877,7 @@ function bookPicker(wrap, initialId){
       const c = document.createElement('button');
       c.type = 'button';
       c.className = 'chip' + (sel===bk.id ? ' on' : '');
-      c.textContent = (sel===bk.id ? '📖 ' : '') + bk.title;
+      c.innerHTML = (bk.cv ? `<img class="cv" src="${bk.cv}" alt="">` : (sel===bk.id ? '📖 ' : '')) + escapeHtml(bk.title);
       c.setAttribute('aria-pressed', String(sel===bk.id));
       c.onclick = () => { sel = sel===bk.id ? '' : bk.id; draw(); };
       wrap.appendChild(c);
@@ -875,7 +977,10 @@ function renderPalette(){
   }
   const sb = state.spinBook;
   if(sb){
-    if(sb.status==='ok') extra('📖', 'Color in', escapeHtml(bookTitle(sb.id)));
+    if(sb.status==='ok'){
+      extra(bookCover(sb.id) ? `<img src="${bookCover(sb.id)}" alt="">` : '📖', 'Color in', escapeHtml(bookTitle(sb.id)));
+      if(bookCover(sb.id)) el.lastElementChild.querySelector('.ico').classList.add('coverIco');
+    }
     else if(sb.status==='empty') extra('📖', 'Coloring book', 'Your shelf is empty — add a book below the spin settings.', true);
     else extra('📖', 'Coloring book', 'Every book is crossed out — uncross one to get a pick.', true);
   }
@@ -1080,7 +1185,7 @@ function openLightbox(pid, ph){
       <div class="panel">
         <h3>${comboName(colorIdsOf(ph.c))}</h3>
         <div class="dateline">${ph.s ? ph.s + ' · ' : ''}Added ${dateStr()}</div>
-        ${ph.b && bookTitle(ph.b) ? `<div class="infoLine">📖 ${escapeHtml(bookTitle(ph.b))}</div>` : ''}
+        ${ph.b && bookTitle(ph.b) ? `<div class="infoLine" style="display:flex; align-items:center; gap:8px">${bookCover(ph.b) ? `<img class="cover" style="width:30px; height:40px" src="${bookCover(ph.b)}" alt="">` : '📖'} ${escapeHtml(bookTitle(ph.b))}</div>` : ''}
         ${ph.m ? `<div class="infoLine">🖊️ ${escapeHtml(ph.m)}</div>` : ''}
         <div class="lblab">Notes</div>
         <div class="noteView${ph.n ? '' : ' empty'}">${ph.n ? escapeHtml(ph.n) : 'No notes yet — tap Edit to add one.'}</div>
@@ -1834,7 +1939,7 @@ importInput.onchange = async () => {
       // coloring books (merge by id, keep any already here)
       if(Array.isArray(payload.index.books)){
         for(const b of payload.index.books){
-          if(b && b.id && b.title && !ix2.books.some(x=>x.id===b.id)) ix2.books.push({id:b.id, title:b.title});
+          if(b && b.id && b.title && !ix2.books.some(x=>x.id===b.id)) ix2.books.push(Object.assign({id:b.id, title:b.title}, typeof b.cv==='string' && b.cv.startsWith('data:image/') ? {cv:b.cv} : {}));
         }
       }
       await saveIndex(ix2);
