@@ -1971,7 +1971,17 @@ importInput.onchange = async () => {
 
 /* ============ PWA SERVICE WORKER ============ */
 if('serviceWorker' in navigator){
-  try{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }catch(e){}
+  try{
+    // when a new version takes over, reload once so the fresh app appears right away
+    let reloaded = false;
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if(!hadController || reloaded) return;
+      reloaded = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('./sw.js').then(r => r.update()).catch(()=>{});
+  }catch(e){}
 }
 
 /* boot: load remembered settings + the book shelf, then a first spin so the page never opens empty */
